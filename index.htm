@@ -1,72 +1,266 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta http-equiv="Content-Language" content="en-us">
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<title>gamejolt page</title>
-<meta name="description" content="this is going to be my protfolio/main webpage">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achievement Hub</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2, h3 {
+            color: #333;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin: 4px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-label {
+            padding: 8px 16px;
+            margin: 4px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .file-upload-label:hover {
+            background-color: #0056b3;
+        }
+
+        .reward-item {
+            margin-bottom: 8px;
+        }
+
+        .reward-item button {
+            margin-left: 8px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+    <script>
+        var questline = []; // Initialize an empty array for questline data
+        var userAccount = null; // Initialize user account data as null
+
+        function markQuestComplete(questId) {
+            if (userAccount.userType === "DM") {
+                console.log("DMs cannot complete quests.");
+                return;
+            }
+            var completedQuest = questline.find(quest => quest.id === questId);
+            if (!completedQuest) {
+                console.log("Quest not found.");
+                return;
+            }
+            console.log("Claiming reward from quest: " + completedQuest.title);
+            userAccount.rewards.push(completedQuest.reward);
+            displayAccountInfo();
+        }
+
+        function handleAccountUpload(event) {
+            var file = event.target.files[0];
+            var reader = new FileReader();
+
+            reader.onload = function(e) {
+                var contents = e.target.result;
+                userAccount = JSON.parse(contents);
+                displayAccountInfo();
+            };
+
+            reader.readAsText(file);
+        }
+
+        function handleQuestlineUpload(event) {
+            var file = event.target.files[0];
+            var reader = new FileReader();
+
+            reader.onload = function(e) {
+                var contents = e.target.result;
+                questline = JSON.parse(contents);
+                displayQuests();
+            };
+
+            reader.readAsText(file);
+        }
+
+        function displayQuests() {
+            var questListElement = document.getElementById("questList");
+            questListElement.innerHTML = ""; // Clear existing quest list
+            questline.forEach(function(quest) {
+                var questElement = document.createElement("div");
+                questElement.innerHTML = `
+                    <h3>${quest.title}</h3>
+                    <p>Reward: ${quest.reward}</p>
+                    ${userAccount.userType === "DM" ? '' : '<button onclick="markQuestComplete(' + quest.id + ')">Mark Complete</button>'}
+                `;
+                questListElement.appendChild(questElement);
+            });
+        }
+
+        function addQuest() {
+            if (userAccount.userType !== "DM") {
+                console.log("Only DMs can add quests.");
+                return;
+            }
+
+            var title = prompt("Enter quest title:");
+            var reward = prompt("Enter quest reward:");
+
+            var newQuest = {
+                id: questline.length + 1,
+                title: title,
+                reward: reward
+            };
+
+            questline.push(newQuest);
+            displayQuests();
+        }
+
+        function displayAccountInfo() {
+            var accountInfoElement = document.getElementById("accountInfo");
+            accountInfoElement.innerHTML = `
+                <h2>${userAccount.username}'s Account</h2>
+                <p>User Type: ${userAccount.userType}</p>
+                <p>Rewards:</p>
+            `;
+            var rewardsList = document.createElement("ul");
+            userAccount.rewards.forEach(function(reward) {
+                var rewardItem = document.createElement("li");
+                rewardItem.textContent = reward;
+                rewardsList.appendChild(rewardItem);
+            });
+            accountInfoElement.appendChild(rewardsList);
+            var exportButton = document.createElement("button");
+            exportButton.textContent = "Export Account";
+            exportButton.onclick = function() {
+                exportAccount();
+            };
+            accountInfoElement.appendChild(exportButton);
+
+            if (userAccount.userType === "Player") {
+                document.getElementById("questlineButtons").classList.add("hidden");
+            } else {
+                document.getElementById("questlineButtons").classList.remove("hidden");
+            }
+        }
+
+        function createAccount() {
+            var username = prompt("Enter your username:");
+            var userType = prompt("Enter your user type (DM or Player):").toUpperCase();
+            var rewards = [];
+
+            userAccount = {
+                username: username,
+                userType: userType,
+                rewards: rewards
+            };
+
+            displayAccountInfo();
+        }
+
+        function exportAccount() {
+            if (!userAccount) {
+                console.log("No account data to export.");
+                return;
+            }
+
+            var accountJSON = JSON.stringify(userAccount, null, 2);
+            var blob = new Blob([accountJSON], { type: "application/json" });
+            var url = window.URL.createObjectURL(blob);
+            var link = document.createElement("a");
+            link.href = url;
+            link.download = "account.json";
+            link.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function exportQuestline() {
+            if (userAccount.userType !== "DM") {
+                console.log("Only DMs can export questlines.");
+                return;
+            }
+
+            if (questline.length === 0) {
+                console.log("No questline data to export.");
+                return;
+            }
+
+            var questlineJSON = JSON.stringify(questline, null, 2);
+            var blob = new Blob([questlineJSON], { type: "application/json" });
+            var url = window.URL.createObjectURL(blob);
+            var link = document.createElement("a");
+            link.href = url;
+            link.download = "questline.json";
+            link.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        window.onload = function() {
+            // No need to display account info here as it will be displayed only when an account is uploaded or created
+        };
+    </script>
 </head>
+<body>
+    <div class="container">
+        <h1>Achievement Hub</h1>
 
-<body link="#00FF00" vlink="#FF00FF" alink="#00FFFF" text="#000000" bgcolor="#C0C0C0">
+        <div>
+            <h2>Upload Your Account JSON</h2>
+            <label class="file-upload-label" for="accountUpload">Upload Account JSON</label>
+            <input id="accountUpload" type="file" accept=".json" onchange="handleAccountUpload(event)">
+            <button onclick="createAccount()">Create New Account</button>
+        </div>
 
-<h1 align="center">&nbsp;</h1>
-<h1 align="center"><font size="7" color="#00FF00">Pistolk1's web portfolio</font></h1>
-<p align="center"><font color="#000000">thank you for visiting :)</font></p>
-<h2 align="center"><font color="#0000FF"><u><font size="6">Current projects:</font></u>
-</font></h2>
-<p align="center">
-<img border="0" src="images/under%20construction.png" width="337" height="213">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<img border="0" src="images/under%20construction.png" width="346" height="219"></p>
-<p align="center">Bits adventure: a WIP project with no thumbnail as of april/29/2024&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-Computer lab: currently taking a break from this game</p>
-<p align="center">&nbsp;</p>
-<h2 align="center"><u><font size="6" color="#0000FF">Old games:</font></u></h2>
-<h2 align="center"><a href="https://gamejolt.com/games/bitsadven/889348">Bit's 
-adventure</a></h2>
-<p align="center">(no thumbnail)</p>
-<p align="center">this is a simple game where im testing a new feature i have 
-developed for boss-fights, lets hope i can mold the &quot;Cube&quot; into a fun addition</p>
-<p align="center">&nbsp;</p>
-<h2 align="center"><a href="https://gamejolt.com/games/clsingleplayer/865173">
-Computer lab</a></h2>
-<p align="center">(no thumbnail)</p>
-<p align="center">a simple single player game where you walk around a giant 
-computer lab (no shit). im writing a story for this game.</p>
-<p align="center">&nbsp;</p>
-<h2 align="center"><a href="https://gamejolt.com/games/gregsarson/887374">Greg 
-commits arson</a></h2>
-<p align="center"><img border="0" src="images/arsongame.png" width="562" height="319"></p>
-<p align="center">this is a bitch basic game that was supposed to be released 
-for april fools (i was late)</p>
-<p align="center">&nbsp;</p>
-<h2 align="center"><a href="https://gamejolt.com/games/rttherapy/799918">Retail 
-therapy</a></h2>
-<p align="center">(no thumbnail)</p>
-<p align="center">this game is basically un-boxing simulator if it was made by a 
-crazy guy</p>
-<p align="center">&nbsp;</p>
-<h2 align="center"><a href="https://gamejolt.com/games/spacebobs/799525">Space 
-bobs</a> </h2>
-<p align="center">(thumbnail unavailable)</p>
-<p align="center">this is an among us clone with three maps and two task</p>
-<p align="center">&nbsp;</p>
-<h2 align="center"><a href="https://gamejolt.com/games/TCD/793068">The 
-Children's Den</a></h2>
-<p align="center">(thumbnails unavailable)</p>
-<p align="center">this game series has been [cancled] the games were my take on 
-the banban series</p>
-<p align="center">&nbsp;</p>
-<p align="center"><u><font size="6" color="#0000FF"><b>Other things i do:</b></font></u></p>
-<p align="center"><a href="https://www.youtube.com/@pistolk1">YouTube</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://m.twitch.tv/pistolk1/home">Twitch</a></p>
-<p align="center">
-<a href="https://www.facebook.com/groups/975450750352196/?ref=share">fb streams</a></p>
-<p align="center">&nbsp;</p>
-<h2 align="left">&nbsp;</h2>
-<h2 align="left"><u>Donations? </u></h2>
-<p align="left"><font size="2">please donate to me
-<a href="https://ko-fi.com/pistolk1">'here'</a></font></p>
+        <div id="questlineButtons" class="hidden">
+            <h2>Upload Your Questline JSON</h2>
+            <label class="file-upload-label" for="questlineUpload">Upload Questline JSON</label>
+            <input id="questlineUpload" type="file" accept=".json" onchange="handleQuestlineUpload(event)">
+            <button onclick="addQuest()">Add Quest to Questline</button>
+            <button onclick="exportQuestline()">Export Questline</button>
+        </div>
 
+        <div id="questList">
+            <!-- Quests will be dynamically loaded here -->
+        </div>
+
+        <div id="accountInfo">
+            <!-- User account info will be dynamically loaded here -->
+        </div>
+    </div>
 </body>
-
 </html>
+
