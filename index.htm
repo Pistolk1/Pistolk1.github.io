@@ -1,266 +1,107 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Achievement Hub</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-        }
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WebVR Hand Locomotion</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <a-entity id="player" position="0 1.6 0">
+        <!-- Camera -->
+        <a-camera id="camera"></a-camera>
+        <!-- Left Hand -->
+        <a-entity
+          id="leftHand"
+          oculus-touch-controls="hand: left"
+          position="0 0 0"
+        ></a-entity>
+        <!-- Right Hand -->
+        <a-entity
+          id="rightHand"
+          oculus-touch-controls="hand: right"
+          position="0 0 0"
+        ></a-entity>
+      </a-entity>
 
-        .container {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+      <a-box position="0 0.5 -3" rotation="0 45 0" width="1" height="1" depth="1"></a-box>
+      <a-sky color="#ECECEC"></a-sky>
 
-        h1, h2, h3 {
-            color: #333;
-        }
+      <script>
+        AFRAME.registerComponent("hand-locomotion", {
+          init: function () {
+            this.player = document.getElementById("player");
+            this.leftHand = document.getElementById("leftHand");
+            this.rightHand = document.getElementById("rightHand");
 
-        button {
-            padding: 8px 16px;
-            margin: 4px;
-            font-size: 16px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+            this.lastLeftHandPosition = this.leftHand.object3D.position.clone();
+            this.lastRightHandPosition = this.rightHand.object3D.position.clone();
+            this.velocity = new THREE.Vector3();
+            this.maxArmLength = 1.5;
+            this.unStickDistance = 1.0;
 
-        button:hover {
-            background-color: #0056b3;
-        }
+            this.isLeftHandTouching = false;
+            this.isRightHandTouching = false;
 
-        input[type="file"] {
-            display: none;
-        }
-
-        .file-upload-label {
-            padding: 8px 16px;
-            margin: 4px;
-            font-size: 16px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            display: inline-block;
-        }
-
-        .file-upload-label:hover {
-            background-color: #0056b3;
-        }
-
-        .reward-item {
-            margin-bottom: 8px;
-        }
-
-        .reward-item button {
-            margin-left: 8px;
-        }
-
-        .hidden {
-            display: none;
-        }
-    </style>
-    <script>
-        var questline = []; // Initialize an empty array for questline data
-        var userAccount = null; // Initialize user account data as null
-
-        function markQuestComplete(questId) {
-            if (userAccount.userType === "DM") {
-                console.log("DMs cannot complete quests.");
-                return;
-            }
-            var completedQuest = questline.find(quest => quest.id === questId);
-            if (!completedQuest) {
-                console.log("Quest not found.");
-                return;
-            }
-            console.log("Claiming reward from quest: " + completedQuest.title);
-            userAccount.rewards.push(completedQuest.reward);
-            displayAccountInfo();
-        }
-
-        function handleAccountUpload(event) {
-            var file = event.target.files[0];
-            var reader = new FileReader();
-
-            reader.onload = function(e) {
-                var contents = e.target.result;
-                userAccount = JSON.parse(contents);
-                displayAccountInfo();
-            };
-
-            reader.readAsText(file);
-        }
-
-        function handleQuestlineUpload(event) {
-            var file = event.target.files[0];
-            var reader = new FileReader();
-
-            reader.onload = function(e) {
-                var contents = e.target.result;
-                questline = JSON.parse(contents);
-                displayQuests();
-            };
-
-            reader.readAsText(file);
-        }
-
-        function displayQuests() {
-            var questListElement = document.getElementById("questList");
-            questListElement.innerHTML = ""; // Clear existing quest list
-            questline.forEach(function(quest) {
-                var questElement = document.createElement("div");
-                questElement.innerHTML = `
-                    <h3>${quest.title}</h3>
-                    <p>Reward: ${quest.reward}</p>
-                    ${userAccount.userType === "DM" ? '' : '<button onclick="markQuestComplete(' + quest.id + ')">Mark Complete</button>'}
-                `;
-                questListElement.appendChild(questElement);
+            this.el.sceneEl.addEventListener("enter-vr", () => {
+              this.resetHandPositions();
             });
-        }
+          },
 
-        function addQuest() {
-            if (userAccount.userType !== "DM") {
-                console.log("Only DMs can add quests.");
-                return;
+          tick: function (time, deltaTime) {
+            deltaTime = deltaTime / 1000; // Convert ms to seconds
+
+            const leftHandMovement = this.calculateHandMovement(
+              this.leftHand,
+              this.lastLeftHandPosition
+            );
+            const rightHandMovement = this.calculateHandMovement(
+              this.rightHand,
+              this.lastRightHandPosition
+            );
+
+            // Combine hand movements
+            const combinedMovement = leftHandMovement
+              .clone()
+              .add(rightHandMovement)
+              .multiplyScalar(0.5);
+
+            // Apply movement to player
+            this.player.object3D.position.add(combinedMovement);
+
+            // Update last positions
+            this.lastLeftHandPosition.copy(this.leftHand.object3D.position);
+            this.lastRightHandPosition.copy(this.rightHand.object3D.position);
+          },
+
+          calculateHandMovement: function (hand, lastPosition) {
+            const handPosition = hand.object3D.position.clone();
+            const headPosition = this.player.object3D.position.clone();
+            const distance = handPosition.distanceTo(headPosition);
+
+            // Clamp the arm length to avoid unrealistic stretching
+            if (distance > this.maxArmLength) {
+              const direction = handPosition
+                .clone()
+                .sub(headPosition)
+                .normalize();
+              handPosition.copy(
+                headPosition.add(direction.multiplyScalar(this.maxArmLength))
+              );
             }
 
-            var title = prompt("Enter quest title:");
-            var reward = prompt("Enter quest reward:");
+            return handPosition.sub(lastPosition);
+          },
 
-            var newQuest = {
-                id: questline.length + 1,
-                title: title,
-                reward: reward
-            };
+          resetHandPositions: function () {
+            this.lastLeftHandPosition.copy(this.leftHand.object3D.position);
+            this.lastRightHandPosition.copy(this.rightHand.object3D.position);
+          },
+        });
 
-            questline.push(newQuest);
-            displayQuests();
-        }
-
-        function displayAccountInfo() {
-            var accountInfoElement = document.getElementById("accountInfo");
-            accountInfoElement.innerHTML = `
-                <h2>${userAccount.username}'s Account</h2>
-                <p>User Type: ${userAccount.userType}</p>
-                <p>Rewards:</p>
-            `;
-            var rewardsList = document.createElement("ul");
-            userAccount.rewards.forEach(function(reward) {
-                var rewardItem = document.createElement("li");
-                rewardItem.textContent = reward;
-                rewardsList.appendChild(rewardItem);
-            });
-            accountInfoElement.appendChild(rewardsList);
-            var exportButton = document.createElement("button");
-            exportButton.textContent = "Export Account";
-            exportButton.onclick = function() {
-                exportAccount();
-            };
-            accountInfoElement.appendChild(exportButton);
-
-            if (userAccount.userType === "Player") {
-                document.getElementById("questlineButtons").classList.add("hidden");
-            } else {
-                document.getElementById("questlineButtons").classList.remove("hidden");
-            }
-        }
-
-        function createAccount() {
-            var username = prompt("Enter your username:");
-            var userType = prompt("Enter your user type (DM or Player):").toUpperCase();
-            var rewards = [];
-
-            userAccount = {
-                username: username,
-                userType: userType,
-                rewards: rewards
-            };
-
-            displayAccountInfo();
-        }
-
-        function exportAccount() {
-            if (!userAccount) {
-                console.log("No account data to export.");
-                return;
-            }
-
-            var accountJSON = JSON.stringify(userAccount, null, 2);
-            var blob = new Blob([accountJSON], { type: "application/json" });
-            var url = window.URL.createObjectURL(blob);
-            var link = document.createElement("a");
-            link.href = url;
-            link.download = "account.json";
-            link.click();
-            window.URL.revokeObjectURL(url);
-        }
-
-        function exportQuestline() {
-            if (userAccount.userType !== "DM") {
-                console.log("Only DMs can export questlines.");
-                return;
-            }
-
-            if (questline.length === 0) {
-                console.log("No questline data to export.");
-                return;
-            }
-
-            var questlineJSON = JSON.stringify(questline, null, 2);
-            var blob = new Blob([questlineJSON], { type: "application/json" });
-            var url = window.URL.createObjectURL(blob);
-            var link = document.createElement("a");
-            link.href = url;
-            link.download = "questline.json";
-            link.click();
-            window.URL.revokeObjectURL(url);
-        }
-
-        window.onload = function() {
-            // No need to display account info here as it will be displayed only when an account is uploaded or created
-        };
-    </script>
-</head>
-<body>
-    <div class="container">
-        <h1>Achievement Hub</h1>
-
-        <div>
-            <h2>Upload Your Account JSON</h2>
-            <label class="file-upload-label" for="accountUpload">Upload Account JSON</label>
-            <input id="accountUpload" type="file" accept=".json" onchange="handleAccountUpload(event)">
-            <button onclick="createAccount()">Create New Account</button>
-        </div>
-
-        <div id="questlineButtons" class="hidden">
-            <h2>Upload Your Questline JSON</h2>
-            <label class="file-upload-label" for="questlineUpload">Upload Questline JSON</label>
-            <input id="questlineUpload" type="file" accept=".json" onchange="handleQuestlineUpload(event)">
-            <button onclick="addQuest()">Add Quest to Questline</button>
-            <button onclick="exportQuestline()">Export Questline</button>
-        </div>
-
-        <div id="questList">
-            <!-- Quests will be dynamically loaded here -->
-        </div>
-
-        <div id="accountInfo">
-            <!-- User account info will be dynamically loaded here -->
-        </div>
-    </div>
-</body>
+        document.querySelector("#player").setAttribute("hand-locomotion", "");
+      </script>
+    </a-scene>
+  </body>
 </html>
-
