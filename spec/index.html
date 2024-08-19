@@ -74,7 +74,7 @@
             const bookmarkletCode = `
                 javascript:(function() {
                     if (typeof THREE !== 'undefined' && typeof AFRAME === 'undefined') {
-                        let controls, camera;
+                        let controls, camera, xrSession;
                         const initSpectator = () => {
                             camera = new THREE.PerspectiveCamera(${fov}, window.innerWidth / window.innerHeight, 0.1, 1000);
                             camera.position.set(0, ${cameraHeight}, 5);
@@ -84,12 +84,33 @@
                                 controls.lock();
                             });
 
-                            const animate = () => {
-                                requestAnimationFrame(animate);
-                                controls.update(${movementSpeed});
-                                renderer.render(scene, camera);
-                            };
-                            animate();
+                            if (navigator.xr) {
+                                navigator.xr.requestSession('immersive-vr').then(session => {
+                                    xrSession = session;
+                                    session.updateRenderState({ baseLayer: new XRWebGLLayer(session, renderer.getContext()) });
+                                    session.requestReferenceSpace('local').then(refSpace => {
+                                        const onXRFrame = (time, frame) => {
+                                            session.requestAnimationFrame(onXRFrame);
+                                            const pose = frame.getViewerPose(refSpace);
+                                            if (pose) {
+                                                const view = pose.views[0];
+                                                camera.matrix.fromArray(view.transform.matrix);
+                                                camera.updateMatrixWorld(true);
+                                            }
+                                            controls.update(${movementSpeed});
+                                            renderer.render(scene, camera);
+                                        };
+                                        session.requestAnimationFrame(onXRFrame);
+                                    });
+                                });
+                            } else {
+                                const animate = () => {
+                                    requestAnimationFrame(animate);
+                                    controls.update(${movementSpeed});
+                                    renderer.render(scene, camera);
+                                };
+                                animate();
+                            }
                         };
 
                         const existingCamera = scene && scene.getObjectByName("SpectatorCamera");
@@ -112,7 +133,7 @@
                             alert("Spectator camera is already active.");
                         }
                     } else {
-                        alert("Three.js or A-Frame.js not detected.");
+                        alert("Three.js, A-Frame.js, or WebXR not detected.");
                     }
                 })();
             `;
