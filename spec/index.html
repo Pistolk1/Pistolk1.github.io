@@ -3,235 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spectator Camera Configurator</title>
+    <title>3D Spectator Camera Configuration</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #f0f0f0;
+            margin: 0;
             padding: 20px;
         }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        form {
-            max-width: 400px;
-            margin: 0 auto;
-            background: #fff;
+        .container {
+            background-color: #fff;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: auto;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
         }
         label {
+            font-size: 16px;
             display: block;
-            margin: 10px 0 5px;
+            margin-bottom: 8px;
         }
-        select, input[type="number"] {
+        input[type="text"], select {
             width: 100%;
             padding: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            font-size: 16px;
         }
-        input[type="submit"] {
-            width: 100%;
-            padding: 10px;
-            background: #007bff;
-            border: none;
+        button {
+            background-color: #007BFF;
             color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
             border-radius: 4px;
             cursor: pointer;
         }
-        input[type="submit"]:hover {
-            background: #0056b3;
-        }
-        .bookmarklet {
-            text-align: center;
-            margin-top: 20px;
-        }
-        a.bookmarklet-link {
-            display: inline-block;
-            padding: 10px 20px;
-            background: #28a745;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-        a.bookmarklet-link:hover {
-            background: #218838;
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h1>3D Spectator Camera Configuration</h1>
+        <label for="fov">Field of View (FOV):</label>
+        <input type="text" id="fov" value="75">
 
-<h1>Spectator Camera Configurator</h1>
+        <label for="cameraHeight">Camera Height:</label>
+        <input type="text" id="cameraHeight" value="1.6">
 
-<form id="configForm">
-    <label for="library">Select 3D Library</label>
-    <select id="library">
-        <option value="threejs">Three.js</option>
-        <option value="aframe">A-Frame</option>
-        <option value="babylonjs">Babylon.js</option>
-        <option value="playcanvas">PlayCanvas</option>
-    </select>
+        <label for="movementSpeed">Movement Speed:</label>
+        <input type="text" id="movementSpeed" value="0.1">
 
-    <label for="moveSpeed">Movement Speed (default: 0.1)</label>
-    <input type="number" id="moveSpeed" value="0.1" step="0.01" min="0.01">
+        <button id="installBookmarklet">Install Bookmarklet</button>
+    </div>
 
-    <label for="acceleration">Acceleration (for A-Frame, default: 100)</label>
-    <input type="number" id="acceleration" value="100" step="10" min="10">
+    <script>
+        document.getElementById('installBookmarklet').addEventListener('click', function() {
+            const fov = document.getElementById('fov').value;
+            const cameraHeight = document.getElementById('cameraHeight').value;
+            const movementSpeed = document.getElementById('movementSpeed').value;
 
-    <label for="initialX">Initial X Position (default: 0)</label>
-    <input type="number" id="initialX" value="0" step="1">
+            const bookmarkletCode = `
+                javascript:(function() {
+                    if (typeof THREE !== 'undefined' && typeof AFRAME === 'undefined') {
+                        let controls, camera;
+                        const initSpectator = () => {
+                            camera = new THREE.PerspectiveCamera(${fov}, window.innerWidth / window.innerHeight, 0.1, 1000);
+                            camera.position.set(0, ${cameraHeight}, 5);
 
-    <label for="initialY">Initial Y Position (default: 1.6)</label>
-    <input type="number" id="initialY" value="1.6" step="0.1">
+                            controls = new THREE.PointerLockControls(camera, document.body);
+                            document.body.addEventListener('click', () => {
+                                controls.lock();
+                            });
 
-    <label for="initialZ">Initial Z Position (default: 0)</label>
-    <input type="number" id="initialZ" value="0" step="1">
+                            const animate = () => {
+                                requestAnimationFrame(animate);
+                                controls.update(${movementSpeed});
+                                renderer.render(scene, camera);
+                            };
+                            animate();
+                        };
 
-    <input type="submit" value="Generate Bookmarklet">
-</form>
-
-<div class="bookmarklet" id="bookmarkletDiv" style="display: none;">
-    <p>Drag the link below to your bookmarks bar:</p>
-    <a href="#" class="bookmarklet-link" id="bookmarkletLink">Spectator Camera</a>
-</div>
-
-<script>
-    document.getElementById('configForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        
-        const library = document.getElementById('library').value;
-        const moveSpeed = document.getElementById('moveSpeed').value;
-        const acceleration = document.getElementById('acceleration').value;
-        const initialX = document.getElementById('initialX').value;
-        const initialY = document.getElementById('initialY').value;
-        const initialZ = document.getElementById('initialZ').value;
-
-        let bookmarkletCode = '';
-
-        if (library === 'threejs') {
-            bookmarkletCode = `
-                (function(){
-                    if (typeof THREE !== 'undefined') {
-                        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-                        camera.position.set(${initialX}, ${initialY}, ${initialZ});
-                        const scene = window.scene || new THREE.Scene();
-                        const renderer = window.renderer || new THREE.WebGLRenderer();
-                        document.body.appendChild(renderer.domElement);
-                        const controls = new THREE.PointerLockControls(camera, document.body);
-                        document.addEventListener('click', () => controls.lock());
-                        scene.add(camera);
-                        const velocity = new THREE.Vector3();
-                        const direction = new THREE.Vector3();
-                        const moveSpeed = ${moveSpeed};
-                        function animate() {
-                            requestAnimationFrame(animate);
-                            direction.z = Number(moveForward) - Number(moveBackward);
-                            direction.x = Number(moveRight) - Number(moveLeft);
-                            direction.normalize();
-                            if (controls.isLocked === true) {
-                                velocity.z -= direction.z * moveSpeed;
-                                velocity.x -= direction.x * moveSpeed;
-                                controls.moveRight(-velocity.x);
-                                controls.moveForward(-velocity.z);
-                            }
-                            renderer.render(scene, camera);
+                        const existingCamera = scene && scene.getObjectByName("SpectatorCamera");
+                        if (!existingCamera) {
+                            initSpectator();
+                        } else {
+                            alert("Spectator camera is already active.");
                         }
-                        animate();
-                        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-                        document.addEventListener('keydown', (event) => {
-                            switch (event.code) {
-                                case 'KeyW': moveForward = true; break;
-                                case 'KeyA': moveLeft = true; break;
-                                case 'KeyS': moveBackward = true; break;
-                                case 'KeyD': moveRight = true; break;
-                            }
-                        });
-                        document.addEventListener('keyup', (event) => {
-                            switch (event.code) {
-                                case 'KeyW': moveForward = false; break;
-                                case 'KeyA': moveLeft = false; break;
-                                case 'KeyS': moveBackward = false; break;
-                                case 'KeyD': moveRight = false; break;
-                            }
-                        });
-                    } else {
-                        alert('Three.js not detected.');
-                    }
-                })();
-            `;
-        } else if (library === 'aframe') {
-            bookmarkletCode = `
-                (function(){
-                    if (typeof AFRAME !== 'undefined') {
-                        const camera = document.createElement('a-entity');
-                        camera.setAttribute('id', 'spectator-camera');
-                        camera.setAttribute('camera', '');
-                        camera.setAttribute('look-controls', 'pointerLockEnabled: true');
-                        camera.setAttribute('wasd-controls', 'acceleration: ${acceleration}');
-                        camera.setAttribute('position', '${initialX} ${initialY} ${initialZ}');
-                        document.querySelector('a-scene').appendChild(camera);
-                    } else {
-                        alert('A-Frame not detected.');
-                    }
-                })();
-            `;
-        } else if (library === 'babylonjs') {
-            bookmarkletCode = `
-                (function(){
-                    if (typeof BABYLON !== 'undefined') {
-                        const canvas = document.createElement('canvas');
-                        document.body.appendChild(canvas);
-                        const engine = new BABYLON.Engine(canvas, true);
-                        const scene = new BABYLON.Scene(engine);
-                        const camera = new BABYLON.UniversalCamera("spectatorCamera", new BABYLON.Vector3(${initialX}, ${initialY}, ${initialZ}), scene);
-                        camera.attachControl(canvas, true);
-                        camera.speed = ${moveSpeed};
-                        scene.activeCamera = camera;
-                        engine.runRenderLoop(() => scene.render());
-                    } else {
-                        alert('Babylon.js not detected.');
-                    }
-                })();
-            `;
-        } else if (library === 'playcanvas') {
-            bookmarkletCode = `
-                (function(){
-                    if (typeof pc !== 'undefined') {
-                        const app = pc.Application.getApplication();
-                        if (app) {
-                            const camera = new pc.Entity('spectatorCamera');
-                            camera.addComponent('camera', {
-                                clearColor: new pc.Color(0.4, 0.45, 0.5)
-                            });
-                            camera.translate(${initialX}, ${initialY}, ${initialZ});
-                            camera.addComponent('script');
-                            camera.script.create('flyCamera', {
-                                attributes: {
-                                    moveSpeed: ${moveSpeed}
-                                }
-                            });
-                            app.root.addChild(camera);
-                            app.mouse.on(pc.EVENT_MOUSEDOWN, function (event) {
-                                app.mouse.enablePointerLock();
-                            });
+                    } else if (typeof AFRAME !== 'undefined') {
+                        const scene = document.querySelector('a-scene');
+                        if (scene && !document.querySelector('#spectator-camera')) {
+                            const spectatorCamera = document.createElement('a-entity');
+                            spectatorCamera.setAttribute('id', 'spectator-camera');
+                            spectatorCamera.setAttribute('camera', \`active: true; fov: ${fov}\`);
+                            spectatorCamera.setAttribute('position', '0 ${cameraHeight} 0');
+                            spectatorCamera.setAttribute('wasd-controls', '');
+                            spectatorCamera.setAttribute('look-controls', 'pointerLockEnabled: true');
+                            scene.appendChild(spectatorCamera);
+                        } else {
+                            alert("Spectator camera is already active.");
                         }
                     } else {
-                        alert('PlayCanvas not detected.');
+                        alert("Three.js or A-Frame.js not detected.");
                     }
                 })();
             `;
-        }
+            const bookmarklet = `javascript:${encodeURIComponent(bookmarkletCode.trim())}`;
 
-        const encodedCode = encodeURIComponent(bookmarkletCode.trim());
-        const bookmarkletLink = document.getElementById('bookmarkletLink');
-        bookmarkletLink.href = `javascript:${encodedCode}`;
-
-        document.getElementById('bookmarkletDiv').style.display = 'block';
-    });
-</script>
-
+            const link = document.createElement('a');
+            link.href = bookmarklet;
+            link.text = 'Drag this link to your bookmarks bar: 3D Spectator Camera';
+            link.style.display = 'block';
+            link.style.marginTop = '20px';
+            link.style.color = '#007BFF';
+            document.querySelector('.container').appendChild(link);
+        });
+    </script>
 </body>
 </html>
