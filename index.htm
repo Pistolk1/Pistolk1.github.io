@@ -1,63 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gorilla Tag Movement System</title>
-  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <script src="https://unpkg.com/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/aframe-physics-system@latest/dist/aframe-physics-system.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gorilla Tag HTML Prototype</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <a-scene physics="debug: false">
-    <!-- Camera rig -->
-    <a-entity id="rig" position="0 1.6 0">
-      <a-entity id="camera" camera look-controls wasd-controls position="0 0 0"></a-entity>
-      <!-- Left Hand -->
-      <a-entity id="leftHand" oculus-touch-controls="hand: left" physics-body="type: dynamic; shape: sphere; radius: 0.1" position="-0.5 0.5 0.5">
-        <a-sphere radius="0.1" color="blue"></a-sphere>
-      </a-entity>
-      <!-- Right Hand -->
-      <a-entity id="rightHand" oculus-touch-controls="hand: right" physics-body="type: dynamic; shape: sphere; radius: 0.1" position="0.5 0.5 0.5">
-        <a-sphere radius="0.1" color="red"></a-sphere>
-      </a-entity>
-    </a-entity>
-
-    <!-- Ground -->
-    <a-plane rotation="-90 0 0" width="100" height="100" color="green" static-body></a-plane>
-    
-    <!-- Walls -->
-    <a-box position="0 1 -5" width="10" height="2" depth="0.5" color="gray" static-body></a-box>
-    <a-box position="0 1 5" width="10" height="2" depth="0.5" color="gray" static-body></a-box>
-    <a-box position="5 1 0" width="0.5" height="2" depth="10" color="gray" static-body></a-box>
-    <a-box position="-5 1 0" width="0.5" height="2" depth="10" color="gray" static-body></a-box>
-
-    <!-- Sky -->
-    <a-sky color="#ECECEC"></a-sky>
-  </a-scene>
-
-  <script>
-    // Variables for movement
-    const rig = document.querySelector('#rig');
-    const leftHand = document.querySelector('#leftHand');
-    const rightHand = document.querySelector('#rightHand');
-    const movementSpeed = 0.05;
-
-    function updateHandMovement(hand) {
-      const handPosition = hand.object3D.position;
-      const handVelocity = hand.components['velocity'].velocity;
-
-      if (handVelocity.y < -0.5) {
-        rig.object3D.position.x -= handVelocity.x * movementSpeed;
-        rig.object3D.position.y -= handVelocity.y * movementSpeed;
-        rig.object3D.position.z -= handVelocity.z * movementSpeed;
-      }
-    }
-
-    document.querySelector('a-scene').addEventListener('tick', () => {
-      updateHandMovement(leftHand);
-      updateHandMovement(rightHand);
-    });
-  </script>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
