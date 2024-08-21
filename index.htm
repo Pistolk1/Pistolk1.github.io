@@ -3,14 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gorilla Tag HTML Prototype</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Gorilla Tag HTML Version</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/donmccurdy/aframe-physics-system/v3.3.0/dist/aframe-physics-system.min.js"></script>
+    <script src="script.js"></script>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="game-container">
-        <canvas id="gameCanvas"></canvas>
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="script.js"></script>
+    <a-scene physics="gravity: -9.8" embedded>
+        <!-- Ground with physics -->
+        <a-plane position="0 0 0" rotation="-90 0 0" width="500" height="500" color="#228B22" static-body></a-plane>
+
+        <!-- Player (camera rig) with physics -->
+        <a-entity id="cameraRig" position="0 1.6 5" dynamic-body="mass: 1; shape: box;">
+            <a-camera id="camera" wasd-controls="enabled: false" look-controls="pointerLockEnabled: true"></a-camera>
+            <a-entity id="leftHand" hand-controls="hand: left" super-hands="colliderEvent: grab; grabStartButtons: triggerdown; grabEndButtons: triggerup"></a-entity>
+            <a-entity id="rightHand" hand-controls="hand: right" super-hands="colliderEvent: grab; grabStartButtons: triggerdown; grabEndButtons: triggerup"></a-entity>
+        </a-entity>
+
+        <!-- Environment with grabable objects -->
+        <a-box position="0 1 0" color="#FFC65D" dynamic-body></a-box>
+        <a-sphere position="2 1 0" color="#FF5733" radius="0.5" dynamic-body></a-sphere>
+        <a-cylinder position="-2 1 0" color="#33FF57" radius="0.5" height="1" dynamic-body></a-cylinder>
+    </a-scene>
 </body>
 </html>

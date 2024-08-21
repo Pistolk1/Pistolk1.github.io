@@ -1,23 +1,40 @@
-body, html {
+body {
     margin: 0;
-    padding: 0;
     overflow: hidden;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #87ceeb; /* Sky blue background */
+    font-family: Arial, sans-serif;
+    background-color: #000; /* Background color to prevent any white flashes */
 }
 
-#game-container {
-    position: relative;
+a-scene {
     width: 100%;
     height: 100%;
-}
-
-canvas {
     display: block;
-    width: 100%;
-    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+/* Customize hands */
+#leftHand, #rightHand {
+    color: #ffffff;
+    opacity: 0.8;
+}
+
+#leftHand {
+    material="color: #ff0000";
+}
+
+#rightHand {
+    material="color: #0000ff";
+}
+
+/* Customize interactable objects */
+a-box, a-sphere, a-cylinder {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+a-box:hover, a-sphere:hover, a-cylinder:hover {
+    transform: scale(1.1);
 }
