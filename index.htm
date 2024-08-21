@@ -15,10 +15,16 @@
         <a-plane position="0 0 0" rotation="-90 0 0" width="500" height="500" color="#228B22" static-body></a-plane>
 
         <!-- Player (camera rig) with physics -->
-        <a-entity id="cameraRig" position="0 1.6 5" dynamic-body="mass: 1; shape: box;">
-            <a-camera id="camera" wasd-controls="enabled: false" look-controls="pointerLockEnabled: true"></a-camera>
-            <a-entity id="leftHand" hand-controls="hand: left" super-hands="colliderEvent: grab; grabStartButtons: triggerdown; grabEndButtons: triggerup"></a-entity>
-            <a-entity id="rightHand" hand-controls="hand: right" super-hands="colliderEvent: grab; grabStartButtons: triggerdown; grabEndButtons: triggerup"></a-entity>
+        <a-entity id="cameraRig" position="0 1.6 5">
+            <!-- Player head with collisions -->
+            <a-camera id="camera" wasd-controls="enabled: false" look-controls="pointerLockEnabled: true" 
+                      dynamic-body="shape: sphere; mass: 1; radius: 0.1;"></a-camera>
+            <!-- Left hand with collisions -->
+            <a-entity id="leftHand" hand-controls="hand: left" super-hands="colliderEvent: grab; grabStartButtons: triggerdown; grabEndButtons: triggerup" 
+                      dynamic-body="shape: sphere; radius: 0.05;"></a-entity>
+            <!-- Right hand with collisions -->
+            <a-entity id="rightHand" hand-controls="hand: right" super-hands="colliderEvent: grab; grabStartButtons: triggerdown; grabEndButtons: triggerup" 
+                      dynamic-body="shape: sphere; radius: 0.05;"></a-entity>
         </a-entity>
 
         <!-- Environment with grabable objects -->
