@@ -23,8 +23,8 @@ AFRAME.registerComponent('gorilla-movement', {
         this.applyGravity();
         this.handleJump(handPositions);
 
-        // Update player position
-        this.cameraRig.object3D.position.add(this.velocity);
+        // Ensure the player velocity is affected by collisions
+        this.updatePlayerPosition();
 
         // Dampening to simulate friction
         this.velocity.x *= 0.9;
@@ -65,6 +65,26 @@ AFRAME.registerComponent('gorilla-movement', {
         if (this.canJump && leftVelocityY > this.data.gestureThreshold && rightVelocityY > this.data.gestureThreshold) {
             this.velocity.y = this.data.jumpStrength;
             this.canJump = false;
+        }
+    },
+
+    updatePlayerPosition: function() {
+        const cameraRigEl = this.cameraRig;
+
+        // Applying velocity to the player entity
+        cameraRigEl.setAttribute('velocity', {
+            x: this.velocity.x,
+            y: this.velocity.y,
+            z: this.velocity.z
+        });
+
+        // Checking collisions and adjusting the position accordingly
+        cameraRigEl.object3D.position.add(this.velocity);
+
+        // Reset Y velocity if grounded
+        if (cameraRigEl.object3D.position.y <= this.groundY) {
+            cameraRigEl.object3D.position.y = this.groundY;
+            this.velocity.y = 0;
         }
     }
 });
