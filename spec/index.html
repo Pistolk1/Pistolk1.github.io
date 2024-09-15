@@ -106,14 +106,26 @@
                             scene.appendChild(spectatorCamera);
                         }
                     };
+// Babylon.js Setup
+const setupBabylonJsCamera = () => {
+    // Check if a scene and engine already exist, or create a new one
+    let canvas = document.querySelector('canvas') || document.createElement('canvas');
+    if (!canvas.parentElement) {
+        document.body.appendChild(canvas);
+    }
+    let engine = window.engine || new BABYLON.Engine(canvas, true); // Use existing engine or create a new one
+    let scene = window.scene || new BABYLON.Scene(engine);
 
-                    // Babylon.js Setup
-                    const setupBabylonJsCamera = () => {
-                        const camera = new BABYLON.FreeCamera('spectator-camera', new BABYLON.Vector3(0, ${cameraHeight}, -10), scene);
-                        camera.fov = ${fov} * Math.PI / 180; // Convert FOV to radians for Babylon
-                        camera.attachControl(canvas, true);
-                        scene.activeCamera = camera;
-                    };
+    const camera = new BABYLON.FreeCamera('spectator-camera', new BABYLON.Vector3(0, ${cameraHeight}, -10), scene);
+    camera.fov = ${fov} * Math.PI / 180; // Convert FOV to radians for Babylon
+    camera.attachControl(canvas, true);
+    scene.activeCamera = camera;
+
+    // Render loop
+    engine.runRenderLoop(function() {
+        scene.render();
+    });
+};
 
                     // PlayCanvas Setup
                     const setupPlayCanvasCamera = () => {
