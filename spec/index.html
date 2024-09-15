@@ -73,54 +73,47 @@
 
             const bookmarkletCode = `
                 javascript:(function() {
-                    if (typeof THREE !== 'undefined' && typeof AFRAME === 'undefined') {
+                    let scene, renderer;
+                    const setupThreeJsCamera = () => {
                         let controls, camera, xrSession;
-                        const initSpectator = () => {
-                            camera = new THREE.PerspectiveCamera(${fov}, window.innerWidth / window.innerHeight, 0.1, 1000);
-                            camera.position.set(0, ${cameraHeight}, 5);
+                        camera = new THREE.PerspectiveCamera(${fov}, window.innerWidth / window.innerHeight, 0.1, 1000);
+                        camera.position.set(0, ${cameraHeight}, 5);
 
-                            controls = new THREE.PointerLockControls(camera, document.body);
-                            document.body.addEventListener('click', () => {
-                                controls.lock();
-                            });
+                        controls = new THREE.PointerLockControls(camera, document.body);
+                        document.body.addEventListener('click', () => {
+                            controls.lock();
+                        });
 
-                            if (navigator.xr) {
-                                navigator.xr.requestSession('immersive-vr').then(session => {
-                                    xrSession = session;
-                                    session.updateRenderState({ baseLayer: new XRWebGLLayer(session, renderer.getContext()) });
-                                    session.requestReferenceSpace('local').then(refSpace => {
-                                        const onXRFrame = (time, frame) => {
-                                            session.requestAnimationFrame(onXRFrame);
-                                            const pose = frame.getViewerPose(refSpace);
-                                            if (pose) {
-                                                const view = pose.views[0];
-                                                camera.matrix.fromArray(view.transform.matrix);
-                                                camera.updateMatrixWorld(true);
-                                            }
-                                            controls.update(${movementSpeed});
-                                            renderer.render(scene, camera);
-                                        };
+                        if (navigator.xr) {
+                            navigator.xr.requestSession('immersive-vr').then(session => {
+                                xrSession = session;
+                                session.updateRenderState({ baseLayer: new XRWebGLLayer(session, renderer.getContext()) });
+                                session.requestReferenceSpace('local').then(refSpace => {
+                                    const onXRFrame = (time, frame) => {
                                         session.requestAnimationFrame(onXRFrame);
-                                    });
+                                        const pose = frame.getViewerPose(refSpace);
+                                        if (pose) {
+                                            const view = pose.views[0];
+                                            camera.matrix.fromArray(view.transform.matrix);
+                                            camera.updateMatrixWorld(true);
+                                        }
+                                        controls.update(${movementSpeed});
+                                        renderer.render(scene, camera);
+                                    };
+                                    session.requestAnimationFrame(onXRFrame);
                                 });
-                            } else {
-                                const animate = () => {
-                                    requestAnimationFrame(animate);
-                                    controls.update(${movementSpeed});
-                                    renderer.render(scene, camera);
-                                };
-                                animate();
-                            }
-                        };
-
-                        const existingCamera = scene && scene.getObjectByName("SpectatorCamera");
-                        if (!existingCamera) {
-                            initSpectator();
+                            });
                         } else {
-                            alert("Spectator camera is already active.");
+                            const animate = () => {
+                                requestAnimationFrame(animate);
+                                controls.update(${movementSpeed});
+                                renderer.render(scene, camera);
+                            };
+                            animate();
                         }
-                    } else if (typeof AFRAME !== 'undefined') {
-                        const scene = document.querySelector('a-scene');
+                    };
+
+                    const setupAFrameCamera = () => {
                         if (scene && !document.querySelector('#spectator-camera')) {
                             const spectatorCamera = document.createElement('a-entity');
                             spectatorCamera.setAttribute('id', 'spectator-camera');
@@ -132,8 +125,17 @@
                         } else {
                             alert("Spectator camera is already active.");
                         }
+                    };
+
+                    if (typeof THREE !== 'undefined') {
+                        scene = window.scene || document.querySelector('canvas');
+                        renderer = window.renderer || new THREE.WebGLRenderer();
+                        setupThreeJsCamera();
+                    } else if (typeof AFRAME !== 'undefined') {
+                        scene = document.querySelector('a-scene');
+                        setupAFrameCamera();
                     } else {
-                        alert("Three.js, A-Frame.js, or WebXR not detected.");
+                        alert("Three.js or A-Frame.js not detected on this page.");
                     }
                 })();
             `;
