@@ -74,6 +74,8 @@
             const bookmarkletCode = `
                 javascript:(function() {
                     let scene, renderer;
+
+                    // Three.js Setup
                     const setupThreeJsCamera = () => {
                         let controls, camera, xrSession;
                         camera = new THREE.PerspectiveCamera(${fov}, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -84,37 +86,17 @@
                             controls.lock();
                         });
 
-                        if (navigator.xr) {
-                            navigator.xr.requestSession('immersive-vr').then(session => {
-                                xrSession = session;
-                                session.updateRenderState({ baseLayer: new XRWebGLLayer(session, renderer.getContext()) });
-                                session.requestReferenceSpace('local').then(refSpace => {
-                                    const onXRFrame = (time, frame) => {
-                                        session.requestAnimationFrame(onXRFrame);
-                                        const pose = frame.getViewerPose(refSpace);
-                                        if (pose) {
-                                            const view = pose.views[0];
-                                            camera.matrix.fromArray(view.transform.matrix);
-                                            camera.updateMatrixWorld(true);
-                                        }
-                                        controls.update(${movementSpeed});
-                                        renderer.render(scene, camera);
-                                    };
-                                    session.requestAnimationFrame(onXRFrame);
-                                });
-                            });
-                        } else {
-                            const animate = () => {
-                                requestAnimationFrame(animate);
-                                controls.update(${movementSpeed});
-                                renderer.render(scene, camera);
-                            };
-                            animate();
-                        }
+                        const animate = () => {
+                            requestAnimationFrame(animate);
+                            controls.update(${movementSpeed});
+                            renderer.render(scene, camera);
+                        };
+                        animate();
                     };
 
+                    // A-Frame Setup
                     const setupAFrameCamera = () => {
-                        if (scene && !document.querySelector('#spectator-camera')) {
+                        if (!document.querySelector('#spectator-camera')) {
                             const spectatorCamera = document.createElement('a-entity');
                             spectatorCamera.setAttribute('id', 'spectator-camera');
                             spectatorCamera.setAttribute('camera', \`active: true; fov: ${fov}\`);
@@ -122,11 +104,41 @@
                             spectatorCamera.setAttribute('wasd-controls', '');
                             spectatorCamera.setAttribute('look-controls', 'pointerLockEnabled: true');
                             scene.appendChild(spectatorCamera);
-                        } else {
-                            alert("Spectator camera is already active.");
                         }
                     };
 
+                    // Babylon.js Setup
+                    const setupBabylonJsCamera = () => {
+                        const camera = new BABYLON.FreeCamera('spectator-camera', new BABYLON.Vector3(0, ${cameraHeight}, -10), scene);
+                        camera.fov = ${fov} * Math.PI / 180; // Convert FOV to radians for Babylon
+                        camera.attachControl(canvas, true);
+                        scene.activeCamera = camera;
+                    };
+
+                    // PlayCanvas Setup
+                    const setupPlayCanvasCamera = () => {
+                        const camera = new pc.Entity('spectator-camera');
+                        camera.addComponent('camera', {
+                            fov: ${fov},
+                            clearColor: new pc.Color(0.2, 0.2, 0.2)
+                        });
+                        camera.setPosition(0, ${cameraHeight}, 0);
+                        scene.root.addChild(camera);
+                    };
+
+                    // CesiumJS Setup
+                    const setupCesiumJsCamera = () => {
+                        viewer.camera.setView({
+                            destination: Cesium.Cartesian3.fromDegrees(-75.59777, 40.03883, ${cameraHeight}),
+                            orientation: {
+                                heading: Cesium.Math.toRadians(0),
+                                pitch: Cesium.Math.toRadians(-15),
+                                roll: 0.0
+                            }
+                        });
+                    };
+
+                    // Detect and initialize camera based on engine
                     if (typeof THREE !== 'undefined') {
                         scene = window.scene || document.querySelector('canvas');
                         renderer = window.renderer || new THREE.WebGLRenderer();
@@ -134,8 +146,17 @@
                     } else if (typeof AFRAME !== 'undefined') {
                         scene = document.querySelector('a-scene');
                         setupAFrameCamera();
+                    } else if (typeof BABYLON !== 'undefined') {
+                        scene = window.scene || new BABYLON.Scene(engine);
+                        setupBabylonJsCamera();
+                    } else if (typeof pc !== 'undefined') {
+                        scene = window.app || pc.Application.getApplication().root;
+                        setupPlayCanvasCamera();
+                    } else if (typeof Cesium !== 'undefined') {
+                        viewer = window.viewer || new Cesium.Viewer('cesiumContainer');
+                        setupCesiumJsCamera();
                     } else {
-                        alert("Three.js or A-Frame.js not detected on this page.");
+                        alert("No supported 3D engine detected on this page.");
                     }
                 })();
             `;
