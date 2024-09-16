@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Base64 File Encoder & Decoder</title>
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+    }
+    h1, h2 {
+        color: #5a5a5a;
+    }
+    div {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    input[type="file"] {
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    button {
+        background-color: #008cba;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #005f73;
+    }
+    textarea {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        height: 100px;
+        resize: vertical;
+    }
+</style>
+
+<script>
+// Function to encode file data to base64
+function encodeFile() {
+    const file = document.querySelector('#fileInput').files[0];
+    const reader = new FileReader();
+    reader.onloadend = function() {
+        document.querySelector('#base64Output').value = reader.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+// Function to decode base64 data to file and download it
+function decodeFile() {
+    const base64Data = document.querySelector('#base64Input').value;
+    const byteString = atob(base64Data.split(',')[1]);
+    const mimeString = base64Data.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], {type: mimeString});
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    const filename = "decoded_file";
+    link.download = filename;
+    link.click();
+}
+</script>
+</head>
+<body>
+<h1>Base64 File Encoder & Decoder</h1>
+
+<!-- File Encoding Section -->
+<div>
+    <h2>Encode File to Base64</h2>
+    <input type="file" id="fileInput" />
+    <button onclick="encodeFile()">Encode</button>
+    <textarea id="base64Output" rows="5"></textarea>
+</div>
+
+<!-- File Decoding Section -->
+<div>
+    <h2>Decode Base64 to File</h2>
+    <textarea id="base64Input" rows="5"></textarea>
+    <button onclick="decodeFile()">Decode and Download</button>
+</div>
+
+</body>
+</html>
