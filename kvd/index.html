@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ketron virtual desktop installer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            text-align: center;
+            padding: 50px;
+        }
+        h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .bookmarklet {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            font-size: 1.2em;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .instructions {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            text-align: left;
+            display: inline-block;
+            max-width: 600px;
+        }
+        code {
+            background-color: #f1f1f1;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>intall the Ketron virtual desktop today :)</h1>
+    <p>Turn your current tab into a virtual desktop with draggable, resizable windows containing websites.</p>
+
+    <a class="bookmarklet" href="javascript:(function()%7Bconst%20style%20%3D%20document.createElement('style')%3Bstyle.innerHTML%20%3D%20'%23virtual-desktop%7Bposition%3Aabsolute%3Btop%3A0%3Bleft%3A0%3Bwidth%3A100vw%3Bheight%3A100vh%3Bbackground-color%3A%23333%3Bz-index%3A999999%3Boverflow%3Ahidden%7D.window%7Bposition%3Aabsolute%3Bwidth%3A400px%3Bheight%3A300px%3Bbackground-color%3A%23fff%3Bborder%3A2px%20solid%3Bresize%3Aboth%3Boverflow%3Aauto%3Bz-index%3A10%7D.window%20iframe%7Bwidth%3A100%25%3Bheight%3A90%25%7D.window%20.header%7Bheight%3A10%25%3Bbackground-color%3A%23ccc%3Bcursor%3Amove%3Bdisplay%3Aflex%3Bjustify-content%3Aspace-between%3Bpadding%3A0%205px%7D.window%20.header%20button%7Bbackground%3Ared%3Bcolor%3Awhite%7D.controls%7Bposition%3Afixed%3Btop%3A10px%3Bright%3A10px%3Bz-index%3A1000000%7D.controls%20button%7Bbackground%3A%23666%3Bcolor%3Awhite%7D'%3Bdocument.head.appendChild(style)%3Bconst%20desktop%20%3D%20document.createElement('div')%3Bdesktop.id%20%3D%20'virtual-desktop'%3Bdocument.body.appendChild(desktop)%3Bconst%20controls%20%3D%20document.createElement('div')%3Bcontrols.className%20%3D%20'controls'%3Bcontrols.innerHTML%20%3D%20'%3Cbutton%20id%3D%22add-window%22%3EAdd%20Window%3C/button%3E%3Cbutton%20id%3D%22save-state%22%3ESave%20State%3C/button%3E%3Cinput%20type%3D%22file%22%20id%3D%22load-state%22%20style%3D%22display%3Anone%3B%22%20/%3E%3Cbutton%20id%3D%22load-state-button%22%3ELoad%20State%3C/button%3E'%3Bdocument.body.appendChild(controls)%3Bfunction%20makeDraggable(el)%7Blet%20isDragging%20%3D%20false%3Blet%20offsetX%2CoffsetY%3Bel.querySelector('.header').addEventListener('
