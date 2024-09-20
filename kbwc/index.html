@@ -83,7 +83,7 @@
             var censorWordsArray = JSON.stringify(censorWords);
             
             var bookmarkletCode = `
-                javascript:(function() {
+                (function() {
                     var censorWords = ${censorWordsArray};
                     var censorChar = "*";
                     function censorText(text) {
@@ -112,12 +112,11 @@
                         }
                     }
                     walkDOM(document.body);
-                })();
-            `;
-            
+                })();`;
+
             // URL-encode the JavaScript code for the bookmarklet
             var bookmarkletLink = 'javascript:' + encodeURIComponent(bookmarkletCode);
-            
+
             // Update the bookmarklet link in the DOM
             var bookmarkletElement = document.getElementById('bookmarkletLink');
             bookmarkletElement.href = bookmarkletLink;
