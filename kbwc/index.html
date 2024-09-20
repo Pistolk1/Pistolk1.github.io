@@ -63,6 +63,9 @@
     <h1>Bookmarklet Censorship Tool Setup</h1>
 
     <div id="setup-container">
+        <label for="bookmarkletName">Enter the bookmarklet name:</label>
+        <input type="text" id="bookmarkletName" placeholder="Censor Bookmarklet" value="Censor Bookmarklet">
+
         <label for="censorWords">Enter words to censor (comma-separated):</label>
         <input type="text" id="censorWords" placeholder="badword1, badword2, badword3" value="badword1, badword2, badword3">
 
@@ -76,6 +79,7 @@
 
     <script>
         function generateBookmarklet() {
+            var bookmarkletName = document.getElementById('bookmarkletName').value.trim() || "Censor Bookmarklet";
             var censorWords = document.getElementById('censorWords').value.split(',').map(function(word) {
                 return word.trim();
             });
@@ -129,8 +133,9 @@
             // URL-encode the JavaScript code for the bookmarklet
             var bookmarkletLink = 'javascript:' + encodeURIComponent(bookmarkletCode);
 
-            // Update the bookmarklet link in the DOM
+            // Update the bookmarklet link text and href in the DOM
             var bookmarkletElement = document.getElementById('bookmarkletLink');
+            bookmarkletElement.innerText = bookmarkletName;
             bookmarkletElement.href = bookmarkletLink;
         }
     </script>
