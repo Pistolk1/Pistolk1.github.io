@@ -86,6 +86,7 @@
                 (function() {
                     var censorWords = ${censorWordsArray};
                     var censorChar = "*";
+
                     function censorText(text) {
                         censorWords.forEach(function(word) {
                             var regExp = new RegExp("\\\\b" + word + "\\\\b", "gi");
@@ -93,12 +94,13 @@
                         });
                         return text;
                     }
+
                     function walkDOM(node) {
                         var child, next;
                         switch (node.nodeType) {
-                            case 1:
-                            case 9:
-                            case 11:
+                            case 1: // Element node
+                            case 9: // Document node
+                            case 11: // Document fragment node
                                 child = node.firstChild;
                                 while (child) {
                                     next = child.nextSibling;
@@ -106,12 +108,22 @@
                                     child = next;
                                 }
                                 break;
-                            case 3:
+                            case 3: // Text node
                                 node.nodeValue = censorText(node.nodeValue);
                                 break;
                         }
                     }
+
+                    function censorFormInputs() {
+                        var inputs = document.querySelectorAll('input[type="text"], textarea');
+                        inputs.forEach(function(input) {
+                            input.value = censorText(input.value);
+                            input.placeholder = censorText(input.placeholder);
+                        });
+                    }
+
                     walkDOM(document.body);
+                    censorFormInputs();
                 })();`;
 
             // URL-encode the JavaScript code for the bookmarklet
