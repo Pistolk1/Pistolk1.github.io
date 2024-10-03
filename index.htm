@@ -3,38 +3,425 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gorilla Tag HTML Version</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.rawgit.com/donmccurdy/aframe-physics-system/v3.3.0/dist/aframe-physics-system.min.js"></script>
-    <script src="script.js"></script>
-    <link rel="stylesheet" href="styles.css">
+    <title>BluePixel DE</title>
+    <style>
+        /* Basic layout for the desktop and windows */
+        body {
+            margin: 0;
+            background-color: #ffffff;
+            transition: background-color 0.3s;
+            color: black;
+            font-family: Arial, sans-serif;
+            background-size: cover;
+        }
+
+        #desktop {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .dashboard-item {
+            display: inline-block;
+            text-align: center;
+            margin: 20px;
+            cursor: pointer;
+        }
+
+        .dashboard-item img {
+            width: 64px;
+            height: 64px;
+        }
+
+        .window {
+            position: absolute;
+            width: 400px;
+            height: 300px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            display: none;
+            resize: both;
+            overflow: auto;
+            z-index: 1000;
+        }
+
+        .window-header {
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            cursor: move;
+            background-color: #3498db; /* Default color */
+        }
+
+        .window-header .close-button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        .window-header .close-button:hover {
+            background-color: darkred;
+        }
+
+        .window-content {
+            padding: 10px;
+            overflow: auto;
+        }
+
+        /* Text Editor Styling */
+        #text-editor {
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-family: monospace;
+        }
+
+        #program-window {
+            width: 600px;
+            height: 400px;
+        }
+
+        #program-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Dark Mode Styling */
+        body.dark-mode {
+            background-color: #2e2e2e;
+            color: #ffffff;
+        }
+
+        body.dark-mode .window {
+            background-color: #3c3c3c;
+        }
+
+        body.dark-mode .window-header {
+            background: #4a4a4a;
+        }
+
+        body.dark-mode .window-content {
+            color: #ffffff;
+        }
+
+        /* Colors for different window types */
+        #file-explorer .window-header {
+            background-color: #f39c12;
+        }
+
+        #text-editor-window .window-header {
+            background-color: #9b59b6;
+        }
+
+        #program-window .window-header {
+            background-color: #27ae60;
+        }
+
+        #settings-window .window-header {
+            background-color: #e74c3c;
+        }
+
+    </style>
 </head>
 <body>
-    <a-scene physics="gravity: -9.8" embedded>
-        <!-- Ground with physics -->
-        <a-plane position="0 0 0" rotation="-90 0 0" width="500" height="500" color="#228B22" static-body></a-plane>
+    <div id="desktop">
+        <div id="taskbar">
+            <div id="app-launcher" class="app-icon">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAAtCAYAAAA6GuKaAAABg2lDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AcxV9TpVIqDu0g4pChOtlFpTiWKhbBQmkrtOpgcukXNGlIUlwcBdeCgx+LVQcXZ10dXAVB8APE2cFJ0UVK/F9SaBHjwXE/3t173L0DhHadqeZAAlA1y8imkmKhuCoGXhGEH2EEEJeYqadzi3l4jq97+Ph6F+NZ3uf+HMNKyWSATyROMN2wiDeI45uWznmfOMKqkkJ8Tjxl0AWJH7kuu/zGueKwwDMjRj47TxwhFit9LPcxqxoq8SxxVFE1yhcKLiuctzir9Sbr3pO/MFTSVnJcpzmOFJaQRgYiZDRRQx0WYrRqpJjI0n7Swz/m+DPkkslVAyPHAhpQITl+8D/43a1Znpl2k0JJYPDFtj8mgMAu0GnZ9vexbXdOAP8zcKX1/I02MPdJequnRY+AkW3g4rqnyXvA5Q4w+qRLhuRIfppCuQy8n9E3FYHwLRBcc3vr7uP0AchTV8s3wMEhMFmh7HWPdw/19/bvmW5/P6XhcrtNLOCPAAAACXBIWXMAAC4jAAAuIwF4pT92AAAAB3RJTUUH6AoDEw8lvDpRoQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAGOSURBVFjD7ZdPTsJAFIe//hE0kIAkuKnoTly4d+PKQ3gCNXgiTPAGHsMbuALjUlYShUSjVmDcTAWaMhbTNjR5v2Q2fZM337z+5nUKIpFIJBKJciork1U85QB7wBEwBKbrC+2pInAM7AOXwEkSad2Ua3wK3AKbgJ9UUhdP7QAOsA28AmoubgO7wBMwBgb0rWmMCttADTgDSvrpVnLQcKeBi7oaDrABfACfQAO4B76BR+1Pk60UMAGaQCEU+9Kbd5dY1NIxy+xpT6kMjuILMAAO8uDpQDWgklQyO8P26uQRGoEWaIFepnpX6Q9C9Ci11Upzyh2Fp6JHnDymeTq3u3ZF9HvwfBgde7sANZ77uJTaUG2Z7hOLScPz/V58MNNaQZ6o/Hozbm5sXGj+Fm52EN+voG8tjtFNOgBRaw2vZ3D1rpHHNb7Cynk2VQxbIQAPe3tlT6cJ+Ycdwp5Ov0/7D9BvwKgTv3vM28XYp4Me+d/+muEcey27RL0bHSt3oNrK7M9F7h4CLdACLdACLdCJ6wdq2+AluAwiBQAAAABJRU5ErkJggg==" alt="File Explorer">
+            </div>
+        </div>
 
-        <!-- Player (camera rig) with physics -->
-        <a-entity id="cameraRig" position="0 1.6 5">
-            <!-- Player head with collisions -->
-            <a-camera id="camera" wasd-controls="enabled: false" look-controls="pointerLockEnabled: true" 
-                      dynamic-body="shape: sphere; mass: 1; radius: 0.1;"></a-camera>
-            <!-- Left hand with collisions -->
-            <a-entity id="leftHand" hand-controls="hand: left" super-hands="colliderEvent: grab; grabStartButtons: triggerdown; grabEndButtons: triggerup" 
-                      dynamic-body="shape: sphere; radius: 0.05;"></a-entity>
-            <!-- Right hand with collisions -->
-            <a-entity id="rightHand" hand-controls="hand: right" super-hands="colliderEvent: grab; grabStartButtons: triggerdown; grabEndButtons: triggerup" 
-                      dynamic-body="shape: sphere; radius: 0.05;"></a-entity>
-        </a-entity>
+        <!-- Dashboard for quick launching HTML files -->
+        <div id="dashboard"></div>
 
-        <!-- Environment with grabable objects -->
-        <a-box position="0 1 0" color="#FFC65D" dynamic-body></a-box>
-        <a-sphere position="2 1 0" color="#FF5733" radius="0.5" dynamic-body></a-sphere>
-        <a-cylinder position="-2 1 0" color="#33FF57" radius="0.5" height="1" dynamic-body></a-cylinder>
-        
-        <!-- Walls or other obstacles -->
-        <a-box position="5 1 0" color="#4B0082" width="1" height="2" depth="1" static-body></a-box>
-        <a-box position="-5 1 0" color="#4B0082" width="1" height="2" depth="1" static-body></a-box>
-    </a-scene>
+        <!-- File Explorer -->
+        <div id="file-explorer" class="window resizable">
+            <div class="window-header">
+                <span>File Explorer</span>
+                <div>
+                    <button class="close-button" onclick="closeWindow('file-explorer')">X</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <input type="file" id="fileUpload" multiple accept=".html, .txt" />
+                <button id="saveFileBtn">Save to Drive</button>
+                <input type="file" id="loadDrive" accept=".json" />
+                <button id="openSettingsBtn">Open Settings</button>
+                <ul id="fileList"></ul>
+            </div>
+        </div>
+
+        <!-- Text Editor Window -->
+        <div id="text-editor-window" class="window resizable" style="display:none;">
+            <div class="window-header">
+                <span>Text Editor</span>
+                <div>
+                    <button class="close-button" onclick="closeWindow('text-editor-window')">X</button>
+                </div>
+            </div>
+            <textarea id="text-editor" style="width: 100%; height: 200px;"></textarea>
+            <button id="saveTextFileBtn">Save File</button>
+        </div>
+
+        <!-- HTML Program Window -->
+        <div id="program-window" class="window resizable" style="display:none;">
+            <div class="window-header">
+                <span>Program Window</span>
+                <div>
+                    <button class="close-button" onclick="closeWindow('program-window')">X</button>
+                </div>
+            </div>
+            <iframe id="program-frame"></iframe>
+        </div>
+
+        <!-- OS Settings Window -->
+        <div id="settings-window" class="window resizable" style="display:none;">
+            <div class="window-header">
+                <span>OS Settings</span>
+                <div>
+                    <button class="close-button" onclick="closeWindow('settings-window')">X</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <label for="backgroundColor">Background Color:</label>
+                <input type="color" id="backgroundColor" />
+                <label for="backgroundImage">Background Image:</label>
+                <input type="file" id="backgroundImage" accept="image/*" />
+                <label for="darkMode">Dark Mode:</label>
+                <input type="checkbox" id="darkMode" />
+                <button id="saveSettingsBtn">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let drive = { files: [], settings: {} };
+
+        document.getElementById('fileUpload').addEventListener('change', handleFileUpload);
+        document.getElementById('loadDrive').addEventListener('change', loadDrive);
+        document.getElementById('saveFileBtn').addEventListener('click', saveToDrive);
+        document.getElementById('app-launcher').addEventListener('click', openFileExplorer);
+        document.getElementById('saveTextFileBtn').addEventListener('click', saveTextFile);
+        document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+        document.getElementById('backgroundColor').addEventListener('input', updateBackgroundColor);
+        document.getElementById('backgroundImage').addEventListener('change', handleBackgroundImageUpload);
+        document.getElementById('darkMode').addEventListener('change', toggleDarkMode);
+        document.getElementById('openSettingsBtn').addEventListener('click', openSettings);
+
+        loadSettings();
+
+        // Enable dragging of windows
+        function makeDraggable(element) {
+            let offsetX, offsetY;
+
+            element.onmousedown = function(e) {
+                offsetX = e.clientX - element.getBoundingClientRect().left;
+                offsetY = e.clientY - element.getBoundingClientRect().top;
+
+                document.onmousemove = function(e) {
+                    element.style.left = e.clientX - offsetX + 'px';
+                    element.style.top = e.clientY - offsetY + 'px';
+                };
+
+                document.onmouseup = function() {
+                    document.onmousemove = null;
+                    document.onmouseup = null;
+                };
+            };
+        }
+
+        // Make all window headers draggable
+        document.querySelectorAll('.window-header').forEach(header => {
+            makeDraggable(header.parentElement); // Pass the whole window element
+        });
+
+        function handleFileUpload(event) {
+            const files = Array.from(event.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    const fileType = file.type.includes('text/html') ? 'html' : 'text';
+                    drive.files.push({ name: file.name, type: fileType, content });
+                    displayFiles();
+                    updateDashboard();
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        function loadDrive(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    drive = JSON.parse(e.target.result);
+                    loadSettings();
+                    displayFiles();
+                    updateDashboard();
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function saveToDrive() {
+            const jsonData = JSON.stringify(drive);
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'drive.json';
+            a.click();
+        }
+
+        function openFileExplorer() {
+            document.getElementById('file-explorer').style.display = 'block';
+        }
+
+        function closeWindow(windowId) {
+            document.getElementById(windowId).style.display = 'none';
+        }
+
+        function displayFiles() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            drive.files.forEach((file, index) => {
+                const li = document.createElement('li');
+                li.textContent = file.name;
+                li.addEventListener('click', () => openFile(file));
+                
+                // Right-click options for renaming and deleting
+                li.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    const renameOption = confirm("Rename this file?");
+                    if (renameOption) {
+                        const newName = prompt("Enter new name:", file.name);
+                        if (newName) {
+                            file.name = newName;
+                            displayFiles();
+                            updateDashboard();
+                        }
+                    } else {
+                        const deleteOption = confirm("Delete this file?");
+                        if (deleteOption) {
+                            drive.files.splice(index, 1);
+                            displayFiles();
+                            updateDashboard();
+                        }
+                    }
+                });
+                fileList.appendChild(li);
+            });
+        }
+
+        function openFile(file) {
+            if (file.type === 'text') {
+                openTextEditor(file);
+            } else if (file.type === 'html') {
+                openProgramWindow(file);
+            }
+        }
+
+        function openTextEditor(file) {
+            document.getElementById('text-editor').value = file.content;
+            document.getElementById('text-editor-window').style.display = 'block';
+        }
+
+        function saveTextFile() {
+            const textContent = document.getElementById('text-editor').value;
+            drive.files.push({ name: 'New Text File.txt', type: 'text', content: textContent });
+            displayFiles();
+            closeWindow('text-editor-window');
+        }
+
+        function openProgramWindow(file) {
+            const blob = new Blob([file.content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            document.getElementById('program-frame').src = url;
+            document.getElementById('program-window').style.display = 'block';
+        }
+
+        function saveSettings() {
+            const bgColor = document.getElementById('backgroundColor').value;
+            const darkMode = document.getElementById('darkMode').checked;
+            drive.settings.backgroundColor = bgColor;
+            drive.settings.darkMode = darkMode;
+            saveToDrive();
+            applySettings();
+        }
+
+        function loadSettings() {
+            if (drive.settings.backgroundColor) {
+                document.getElementById('backgroundColor').value = drive.settings.backgroundColor;
+            }
+            if (drive.settings.darkMode) {
+                document.getElementById('darkMode').checked = drive.settings.darkMode;
+            }
+            if (drive.settings.backgroundImage) {
+                document.body.style.backgroundImage = `url(${drive.settings.backgroundImage})`;
+            }
+            applySettings();
+        }
+
+        function applySettings() {
+            const bgColor = drive.settings.backgroundColor || '#ffffff';
+            document.body.style.backgroundColor = bgColor;
+            const darkMode = drive.settings.darkMode;
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        }
+
+        function handleBackgroundImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageUrl = e.target.result;
+                    drive.settings.backgroundImage = imageUrl; // Save background image to drive settings
+                    document.body.style.backgroundImage = `url(${imageUrl})`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateBackgroundColor() {
+            const color = document.getElementById('backgroundColor').value;
+            document.body.style.backgroundColor = color;
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        function openSettings() {
+            document.getElementById('settings-window').style.display = 'block';
+        }
+
+        function updateDashboard() {
+            const dashboard = document.getElementById('dashboard');
+            dashboard.innerHTML = '';
+            drive.files.filter(file => file.type === 'html').forEach(file => {
+                const item = document.createElement('div');
+                item.classList.add('dashboard-item');
+                const faviconUrl = getFavicon(file.content);
+                item.innerHTML = `<img src="${faviconUrl}" alt="icon"><br>${file.name}`;
+                item.addEventListener('click', () => openFile(file));
+                dashboard.appendChild(item);
+            });
+        }
+
+        function getFavicon(htmlContent) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            const link = doc.querySelector("link[rel*='icon']");
+            return link ? link.href : 'favicon.ico';
+        }
+    </script>
 </body>
 </html>
