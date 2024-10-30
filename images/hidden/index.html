@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Steganography - Hide Files in Images</title>
+</head>
+<body>
+    <h1>Hide a File Inside an Image</h1>
+
+    <p>Select an image and a file to hide inside the image. The resulting image will contain your hidden file's data.</p>
+    
+    <input type="file" id="imageFile" accept="image/*">
+    <input type="file" id="dataFile">
+    <button onclick="hideFileInImage()">Hide File in Image</button>
+    
+    <h2>Resulting Image with Hidden File</h2>
+    <img id="resultImage" style="max-width:100%; display:none;">
+    <a id="downloadLink" download="image_with_hidden_file.png" style="display:none;">Download Image</a>
+    
+    <script>
+        function hideFileInImage() {
+            const imageFile = document.getElementById('imageFile').files[0];
+            const dataFile = document.getElementById('dataFile').files[0];
+
+            if (!imageFile || !dataFile) {
+                alert("Please select both an image and a file to hide.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageBase64 = e.target.result;
+
+                const dataReader = new FileReader();
+                dataReader.onload = function(event) {
+                    const dataBase64 = btoa(event.target.result);
+
+                    const combinedData = imageBase64 + `<!--hidden:${dataBase64}-->`;
+
+                    const resultImage = document.getElementById('resultImage');
+                    resultImage.src = combinedData;
+                    resultImage.style.display = 'block';
+
+                    const downloadLink = document.getElementById('downloadLink');
+                    downloadLink.href = combinedData;
+                    downloadLink.style.display = 'inline';
+                };
+                dataReader.readAsBinaryString(dataFile);
+            };
+            reader.readAsDataURL(imageFile);
+        }
+    </script>
+</body>
+</html>

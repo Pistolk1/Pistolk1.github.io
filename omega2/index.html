@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bouncing Ball Game</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #282c34;
+        }
+
+        canvas {
+            border: 2px solid #ffffff;
+        }
+
+        input[type="file"] {
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <input type="file" id="levelFile" accept=".json">
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = 800;
+        canvas.height = 600;
+
+        // Ball properties
+        let ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 20,
+            color: 'red',
+            vx: 0,
+            vy: 0,
+            isJumping: false,
+            jumpPower: 15,
+            gravity: 0.5,
+        };
+
+        // Level data
+        let levels = [];
+        let currentLevelIndex = 0;
+
+        function resetLevel() {
+            const currentLevel = levels[currentLevelIndex];
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.vx = 0;
+            ball.vy = 0;
+            ball.isJumping = false;
+            ball.collectedCoins = 0;
+        }
+
+        function drawBall() {
+            ctx.fillStyle = ball.color;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawGoal() {
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.8)';
+            ctx.beginPath();
+            ctx.arc(levels[currentLevelIndex].goal.x, levels[currentLevelIndex].goal.y, levels[currentLevelIndex].goal.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText('Goal', levels[currentLevelIndex].goal.x - 20, levels[currentLevelIndex].goal.y - 35);
+        }
+
+        function drawSpikes() {
+            ctx.fillStyle = 'silver';
+            for (let spike of levels[currentLevelIndex].spikes) {
+                ctx.beginPath();
+                ctx.moveTo(spike.x, spike.y);
+                ctx.lineTo(spike.x - 20, spike.y + 40);
+                ctx.lineTo(spike.x + 20, spike.y + 40);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        function drawBouncyPlatforms() {
+            ctx.fillStyle = 'blue';
+            for (let platform of levels[currentLevelIndex].bouncyPlatforms) {
+                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+            }
+        }
+
+        function drawCoins() {
+            ctx.fillStyle = 'yellow';
+            for (let coin of levels[currentLevelIndex].coins) {
+                ctx.beginPath();
+                ctx.ellipse(coin.x, coin.y, 10, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function update() {
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+
+            // Gravity
+            if (ball.y + ball.radius < canvas.height) {
+                ball.vy += ball.gravity; // Apply gravity only if the ball is not on the ground
+            } else {
+                ball.y = canvas.height - ball.radius; // Reset position to ground level
+                ball.vy = 0; // Reset vertical velocity when on the ground
+                ball.isJumping = false; // Reset jumping status
+            }
+
+            // Bounce off the walls
+            if (ball.x + ball.radius > canvas.width) {
+                ball.x = canvas.width - ball.radius;
+                ball.vx *= -1;
+            } else if (ball.x - ball.radius < 0) {
+                ball.x = ball.radius;
+                ball.vx *= -1;
+            }
+
+            // Check for spikes
+            for (let spike of levels[currentLevelIndex].spikes) {
+                if (ball.x > spike.x - 20 && ball.x < spike.x + 20 && ball.y + ball.radius > spike.y) {
+                    resetLevel();
+                }
+            }
+
+            // Check for bouncy platforms
+            for (let platform of levels[currentLevelIndex].bouncyPlatforms) {
+                if (ball.x > platform.x && ball.x < platform.x + platform.width && ball.y + ball.radius > platform.y && ball.y + ball.radius < platform.y + platform.height) {
+                    ball.vy = -ball.jumpPower; // Adjust the jump power
+                }
+            }
+
+            // Check for coins
+            levels[currentLevelIndex].coins = levels[currentLevelIndex].coins.filter(coin => {
+                const collected = (ball.x > coin.x - 10 && ball.x < coin.x + 10 && ball.y > coin.y - 15 && ball.y < coin.y + 15);
+                if (collected) {
+                    levels[currentLevelIndex].collectedCoins++;
+                }
+                return !collected;
+            });
+
+            // Check for goal
+            const goal = levels[currentLevelIndex].goal;
+            if (ball.x > goal.x - goal.radius && ball.x < goal.x + goal.radius && ball.y > goal.y - goal.radius && ball.y < goal.y + goal.radius) {
+                currentLevelIndex++;
+                if (currentLevelIndex >= levels.length) {
+                    alert('Congratulations! You completed all levels!');
+                    currentLevelIndex = 0; // Restart the game
+                }
+                resetLevel();
+            }
+        }
+
+        // Handle keyboard input for movement
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                ball.vx = 5; // Move right
+            } else if (e.key === 'ArrowLeft') {
+                ball.vx = -5; // Move left
+            } else if (e.key === ' ' && !ball.isJumping) { // Space bar to jump
+                ball.vy = -ball.jumpPower;
+                ball.isJumping = true;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                ball.vx = 0; // Stop horizontal movement when keys are released
+            }
+        });
+
+        // Load levels from a JSON file
+        async function loadLevelsFromFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    levels = JSON.parse(event.target.result);
+                    currentLevelIndex = 0;
+                    resetLevel();
+                } catch (error) {
+                    alert('Failed to load levels. Please ensure the file is a valid JSON format.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Add event listener for file input
+        document.getElementById('levelFile').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                loadLevelsFromFile(file);
+            }
+        });
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBall();
+            drawGoal();
+            drawSpikes();
+            drawBouncyPlatforms();
+            drawCoins();
+            update();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>

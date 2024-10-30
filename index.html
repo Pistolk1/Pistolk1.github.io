@@ -41,9 +41,9 @@
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
             display: none;
+            z-index: 1000;
             resize: both;
             overflow: auto;
-            z-index: 1000;
         }
 
         .window-header {
@@ -124,6 +124,21 @@
             background-color: #e74c3c;
         }
 
+        /* Resize Handle */
+        .resize-handle {
+            width: 10px;
+            height: 10px;
+            background: #000;
+            cursor: nwse-resize;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+        }
+
+        /* Checkbox styling */
+        .file-checkbox {
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -138,7 +153,7 @@
         <div id="dashboard"></div>
 
         <!-- File Explorer -->
-        <div id="file-explorer" class="window resizable">
+        <div id="file-explorer" class="window">
             <div class="window-header">
                 <span>File Explorer</span>
                 <div>
@@ -150,12 +165,18 @@
                 <button id="saveFileBtn">Save to Drive</button>
                 <input type="file" id="loadDrive" accept=".json" />
                 <button id="openSettingsBtn">Open Settings</button>
+                <div>
+                    <button id="renameFileBtn" onclick="renameSelectedFiles()">Rename Selected</button>
+                    <button id="deleteFileBtn" onclick="deleteSelectedFiles()">Delete Selected</button>
+                    <button id="downloadFileBtn" onclick="downloadSelectedFiles()">Download Selected</button>
+                </div>
                 <ul id="fileList"></ul>
             </div>
+            <div class="resize-handle" onmousedown="initResize(event)"></div>
         </div>
 
         <!-- Text Editor Window -->
-        <div id="text-editor-window" class="window resizable" style="display:none;">
+        <div id="text-editor-window" class="window" style="display:none;">
             <div class="window-header">
                 <span>Text Editor</span>
                 <div>
@@ -167,7 +188,7 @@
         </div>
 
         <!-- HTML Program Window -->
-        <div id="program-window" class="window resizable" style="display:none;">
+        <div id="program-window" class="window" style="display:none;">
             <div class="window-header">
                 <span>Program Window</span>
                 <div>
@@ -178,7 +199,7 @@
         </div>
 
         <!-- OS Settings Window -->
-        <div id="settings-window" class="window resizable" style="display:none;">
+        <div id="settings-window" class="window" style="display:none;">
             <div class="window-header">
                 <span>OS Settings</span>
                 <div>
@@ -199,6 +220,7 @@
 
     <script>
         let drive = { files: [], settings: {} };
+        let selectedFileIndex = [];
 
         document.getElementById('fileUpload').addEventListener('change', handleFileUpload);
         document.getElementById('loadDrive').addEventListener('change', loadDrive);
@@ -238,28 +260,34 @@
             makeDraggable(header.parentElement); // Pass the whole window element
         });
 
-        function handleFileUpload(event) {
-            const files = Array.from(event.target.files);
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const content = e.target.result;
-                    const fileType = file.type.includes('text/html') ? 'html' : 'text';
-                    drive.files.push({ name: file.name, type: fileType, content });
-                    displayFiles();
-                    updateDashboard();
-                };
-                reader.readAsText(file);
-            });
+        function initResize(event) {
+            const windowElement = event.target.closest('.window');
+            const startX = event.clientX;
+            const startY = event.clientY;
+            const startWidth = parseInt(window.getComputedStyle(windowElement).width);
+            const startHeight = parseInt(window.getComputedStyle(windowElement).height);
+
+            document.onmousemove = function(e) {
+                const newWidth = startWidth + e.clientX - startX;
+                const newHeight = startHeight + e.clientY - startY;
+                windowElement.style.width = newWidth + 'px';
+                windowElement.style.height = newHeight + 'px';
+            };
+
+            document.onmouseup = function() {
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
+
+            event.preventDefault();
         }
 
-        function loadDrive(event) {
-            const file = event.target.files[0];
-            if (file) {
+        function handleFileUpload(event) {
+            const files = event.target.files;
+            for (let file of files) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    drive = JSON.parse(e.target.result);
-                    loadSettings();
+                    drive.files.push({ name: file.name, type: file.type === 'text/html' ? 'html' : 'text', content: e.target.result });
                     displayFiles();
                     updateDashboard();
                 };
@@ -267,9 +295,21 @@
             }
         }
 
+        function loadDrive(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                drive = JSON.parse(e.target.result);
+                displayFiles();
+                updateDashboard();
+                loadSettings();
+            };
+            reader.readAsText(file);
+        }
+
         function saveToDrive() {
-            const jsonData = JSON.stringify(drive);
-            const blob = new Blob([jsonData], { type: 'application/json' });
+            const json = JSON.stringify(drive);
+            const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -279,10 +319,7 @@
 
         function openFileExplorer() {
             document.getElementById('file-explorer').style.display = 'block';
-        }
-
-        function closeWindow(windowId) {
-            document.getElementById(windowId).style.display = 'none';
+            displayFiles();
         }
 
         function displayFiles() {
@@ -290,31 +327,13 @@
             fileList.innerHTML = '';
             drive.files.forEach((file, index) => {
                 const li = document.createElement('li');
-                li.textContent = file.name;
-                li.addEventListener('click', () => openFile(file));
-                
-                // Right-click options for renaming and deleting
-                li.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                    const renameOption = confirm("Rename this file?");
-                    if (renameOption) {
-                        const newName = prompt("Enter new name:", file.name);
-                        if (newName) {
-                            file.name = newName;
-                            displayFiles();
-                            updateDashboard();
-                        }
-                    } else {
-                        const deleteOption = confirm("Delete this file?");
-                        if (deleteOption) {
-                            drive.files.splice(index, 1);
-                            displayFiles();
-                            updateDashboard();
-                        }
-                    }
-                });
+                li.innerHTML = `<input type="checkbox" class="file-checkbox" value="${index}" onchange="updateSelectedFiles()"> ${file.name}`;
                 fileList.appendChild(li);
             });
+        }
+
+        function updateSelectedFiles() {
+            selectedFileIndex = Array.from(document.querySelectorAll('.file-checkbox:checked')).map(checkbox => parseInt(checkbox.value));
         }
 
         function openFile(file) {
@@ -342,6 +361,66 @@
             const url = URL.createObjectURL(blob);
             document.getElementById('program-frame').src = url;
             document.getElementById('program-window').style.display = 'block';
+
+            // Expose the drive object to the program
+            const script = `
+                window.drive = {
+                    files: ${JSON.stringify(drive.files)},
+                    settings: ${JSON.stringify(drive.settings)},
+                    readFile: function(index) {
+                        return this.files[index];
+                    },
+                    writeFile: function(file) {
+                        this.files.push(file);
+                    },
+                    deleteFile: function(index) {
+                        this.files.splice(index, 1);
+                    },
+                    saveSettings: function() {
+                        // Save settings logic here
+                    }
+                };
+            `;
+            document.getElementById('program-frame').contentWindow.eval(script);
+        }
+
+        function closeWindow(windowId) {
+            document.getElementById(windowId).style.display = 'none';
+        }
+
+        function renameSelectedFiles() {
+            selectedFileIndex.forEach(index => {
+                const newName = prompt("Enter new name:", drive.files[index].name);
+                if (newName) {
+                    drive.files[index].name = newName;
+                }
+            });
+            displayFiles();
+            updateDashboard();
+        }
+
+        function deleteSelectedFiles() {
+            const deleteOption = confirm("Are you sure you want to delete the selected files?");
+            if (deleteOption) {
+                selectedFileIndex.forEach(index => {
+                    drive.files.splice(index, 1);
+                });
+                selectedFileIndex = [];
+                displayFiles();
+                updateDashboard();
+            }
+        }
+
+        function downloadSelectedFiles() {
+            selectedFileIndex.forEach(index => {
+                const file = drive.files[index];
+                const blob = new Blob([file.content], { type: file.type === 'html' ? 'text/html' : 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = file.name;
+                a.click();
+            });
         }
 
         function saveSettings() {

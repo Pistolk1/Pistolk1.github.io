@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Level Editor</title>
+    <style>
+        body, html { margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; }
+        #editorContainer { display: flex; flex-direction: row; width: 100%; }
+        #sidebar { width: 300px; background-color: #333; color: white; padding: 10px; overflow-y: auto; }
+        #editorSidebar h3 { margin-top: 0; }
+        #canvasContainer { flex-grow: 1; position: relative; background: #444; }
+        #levelCanvas, #previewCanvas { width: 100%; height: 100%; }
+        input[type="file"] { display: block; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div id="editorContainer">
+        <div id="sidebar">
+            <h3>Level Editor</h3>
+            <label>Choose Object:
+                <select id="objectType">
+                    <option value="wall">Wall</option>
+                    <option value="floor">Floor</option>
+                    <option value="enemy">Enemy</option>
+                    <option value="spawn">Player Spawn</option>
+                    <option value="end">Level End</option>
+                </select>
+            </label>
+            <br>
+            <label>Upload Wall Texture:
+                <input type="file" id="wallTextureUpload" accept="image/*">
+            </label>
+            <label>Upload Floor Texture:
+                <input type="file" id="floorTextureUpload" accept="image/*">
+            </label>
+            <button onclick="saveLevel()">Save Level</button>
+            <button onclick="loadLevel()">Load Level</button>
+            <br><br>
+            <div id="texturePreview"></div>
+        </div>
+        <div id="canvasContainer">
+            <canvas id="levelCanvas"></canvas>
+            <canvas id="previewCanvas"></canvas>
+        </div>
+    </div>
+    <script src="editor.js"></script>
+</body>
+</html>

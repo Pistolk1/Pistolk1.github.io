@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configure Video & Ad Settings</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group input {
+      width: calc(100% - 10px);
+      padding: 8px;
+      margin-top: 5px;
+    }
+
+    .add-button {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    .download-button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    .remove-button {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Configure Videos and Ads</h2>
+
+    <h3>Videos</h3>
+    <div id="videoContainer"></div>
+    <button class="add-button" id="addVideoBtn">Add Video</button>
+
+    <h3>Ads</h3>
+    <div id="adContainer"></div>
+    <button class="add-button" id="addAdBtn">Add Ad</button>
+
+    <button class="download-button" id="downloadBtn">Download Config</button>
+  </div>
+
+  <script>
+    const videoContainer = document.getElementById('videoContainer');
+    const adContainer = document.getElementById('adContainer');
+    const addVideoBtn = document.getElementById('addVideoBtn');
+    const addAdBtn = document.getElementById('addAdBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    // Template for video input fields
+    function createVideoFields() {
+      const videoDiv = document.createElement('div');
+      videoDiv.classList.add('form-group');
+      videoDiv.innerHTML = `
+        <label>Video Title: <input type="text" class="video-title" placeholder="Enter video title"></label><br>
+        <label>Video Source: <input type="text" class="video-src" placeholder="vidz/video.mp4"></label>
+        <button class="remove-button" onclick="removeItem(this)">Remove</button>
+      `;
+      return videoDiv;
+    }
+
+    // Template for ad input fields
+    function createAdFields() {
+      const adDiv = document.createElement('div');
+      adDiv.classList.add('form-group');
+      adDiv.innerHTML = `
+        <label>Ad Title: <input type="text" class="ad-title" placeholder="Enter ad title"></label><br>
+        <label>Ad Source: <input type="text" class="ad-src" placeholder="adz/ad.mp4"></label>
+        <button class="remove-button" onclick="removeItem(this)">Remove</button>
+      `;
+      return adDiv;
+    }
+
+    // Add video fields to the container
+    addVideoBtn.addEventListener('click', () => {
+      const newVideoFields = createVideoFields();
+      videoContainer.appendChild(newVideoFields);
+    });
+
+    // Add ad fields to the container
+    addAdBtn.addEventListener('click', () => {
+      const newAdFields = createAdFields();
+      adContainer.appendChild(newAdFields);
+    });
+
+    // Remove item (video or ad field)
+    function removeItem(button) {
+      button.parentElement.remove();
+    }
+
+    // Gather all data from the form and create a JSON object
+    function gatherConfigData() {
+      const videos = [];
+      const ads = [];
+
+      document.querySelectorAll('.video-title').forEach((el, index) => {
+        const title = el.value;
+        const src = document.querySelectorAll('.video-src')[index].value;
+        if (title && src) {
+          videos.push({ title, src });
+        }
+      });
+
+      document.querySelectorAll('.ad-title').forEach((el, index) => {
+        const title = el.value;
+        const src = document.querySelectorAll('.ad-src')[index].value;
+        if (title && src) {
+          ads.push({ title, src });
+        }
+      });
+
+      return { videos, ads };
+    }
+
+    // Convert the gathered data to JSON and create a downloadable file
+    function downloadConfigFile(jsonData) {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(jsonData, null, 2));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", "config.json");
+      document.body.appendChild(downloadAnchorNode); // required for Firefox
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+    }
+
+    // Handle the download button click event
+    downloadBtn.addEventListener('click', () => {
+      const configData = gatherConfigData();
+      downloadConfigFile(configData);
+    });
+  </script>
+
+</body>
+</html>
