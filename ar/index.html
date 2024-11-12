@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebAR HUD</title>
+  <title>WebAR HUD with Hand Tracking</title>
   <style>
     body, html {
       margin: 0;
@@ -35,7 +35,7 @@
     <div id="battery">Battery: Loading...</div>
   </div>
   
-  <!-- AR Scene -->
+  <!-- AR Scene and Hand Tracking -->
   <script>
     async function updateHUD() {
       const dateTimeElement = document.getElementById("dateTime");
@@ -61,17 +61,62 @@
     }
     updateHUD();
 
-    // Placeholder for AR functionality initialization
-    async function startAR() {
+    // AR Session Setup with Hand Tracking
+    async function startARWithHandTracking() {
       if (navigator.xr) {
-        const session = await navigator.xr.requestSession("immersive-ar", { requiredFeatures: ["local-floor"] });
-        // AR setup code would go here
-        console.log("AR session started");
+        const session = await navigator.xr.requestSession("immersive-ar", {
+          requiredFeatures: ["local-floor", "hand-tracking"]
+        });
+
+        const xrCanvas = document.createElement("canvas");
+        const gl = xrCanvas.getContext("webgl", { xrCompatible: true });
+        document.body.appendChild(xrCanvas);
+
+        const xrReferenceSpace = await session.requestReferenceSpace("local-floor");
+
+        session.updateRenderState({
+          baseLayer: new XRWebGLLayer(session, gl)
+        });
+
+        session.requestAnimationFrame(onXRFrame);
+
+        function onXRFrame(time, frame) {
+          session.requestAnimationFrame(onXRFrame);
+          const xrPose = frame.getViewerPose(xrReferenceSpace);
+          const glLayer = session.renderState.baseLayer;
+
+          gl.bindFramebuffer(gl.FRAMEBUFFER, glLayer.framebuffer);
+          gl.clearColor(0, 0, 0, 0);
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+          if (xrPose) {
+            for (const view of xrPose.views) {
+              const viewport = glLayer.getViewport(view);
+              gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height);
+
+              // Get hand tracking data
+              const leftHand = frame.getHand(session.inputSources[0]);
+              const rightHand = frame.getHand(session.inputSources[1]);
+
+              if (leftHand) renderHand(leftHand);
+              if (rightHand) renderHand(rightHand);
+            }
+          }
+        }
+
+        function renderHand(hand) {
+          for (const joint of hand.joints.values()) {
+            const { x, y, z } = joint.transform.position;
+            // Render logic for joints, e.g., drawing spheres for hand joints
+            console.log(`Joint position: ${x}, ${y}, ${z}`);
+            // You could use Three.js here to draw the joints if desired
+          }
+        }
       } else {
         alert("WebXR not supported on this device.");
       }
     }
-    startAR();
+    startARWithHandTracking();
   </script>
 </body>
 </html>
