@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebAR HUD with Hand Tracking</title>
+  <style>
+    body, html {
+      margin: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      color: #00ff00;
+      background: rgba(0, 0, 0, 0.4);
+      pointer-events: none;
+      z-index: 1;
+    }
+    #dateTime, #battery {
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <div id="dateTime">Date & Time</div>
+    <div id="battery">Battery: Loading...</div>
+  </div>
+  
+  <!-- AR Scene and Hand Tracking -->
+  <script>
+    async function updateHUD() {
+      const dateTimeElement = document.getElementById("dateTime");
+      const batteryElement = document.getElementById("battery");
+
+      // Update date and time
+      setInterval(() => {
+        const now = new Date();
+        dateTimeElement.innerHTML = now.toLocaleString();
+      }, 1000);
+
+      // Check battery status
+      if (navigator.getBattery) {
+        const battery = await navigator.getBattery();
+        function updateBatteryStatus() {
+          batteryElement.innerHTML = `Battery: ${Math.round(battery.level * 100)}%`;
+        }
+        battery.addEventListener("levelchange", updateBatteryStatus);
+        updateBatteryStatus();
+      } else {
+        batteryElement.innerHTML = "Battery info not available";
+      }
+    }
+    updateHUD();
+
+    // AR Session Setup with Hand Tracking
+    async function startARWithHandTracking() {
+      if (navigator.xr) {
+        const session = await navigator.xr.requestSession("immersive-ar", {
+          requiredFeatures: ["local-floor", "hand-tracking"]
+        });
+
+        const xrCanvas = document.createElement("canvas");
+        const gl = xrCanvas.getContext("webgl", { xrCompatible: true });
+        document.body.appendChild(xrCanvas);
+
+        const xrReferenceSpace = await session.requestReferenceSpace("local-floor");
+
+        session.updateRenderState({
+          baseLayer: new XRWebGLLayer(session, gl)
+        });
+
+        session.requestAnimationFrame(onXRFrame);
+
+        function onXRFrame(time, frame) {
+          session.requestAnimationFrame(onXRFrame);
+          const xrPose = frame.getViewerPose(xrReferenceSpace);
+          const glLayer = session.renderState.baseLayer;
+
+          gl.bindFramebuffer(gl.FRAMEBUFFER, glLayer.framebuffer);
+          gl.clearColor(0, 0, 0, 0);
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+          if (xrPose) {
+            for (const view of xrPose.views) {
+              const viewport = glLayer.getViewport(view);
+              gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height);
+
+              // Get hand tracking data
+              const leftHand = frame.getHand(session.inputSources[0]);
+              const rightHand = frame.getHand(session.inputSources[1]);
+
+              if (leftHand) renderHand(leftHand);
+              if (rightHand) renderHand(rightHand);
+            }
+          }
+        }
+
+        function renderHand(hand) {
+          for (const joint of hand.joints.values()) {
+            const { x, y, z } = joint.transform.position;
+            // Render logic for joints, e.g., drawing spheres for hand joints
+            console.log(`Joint position: ${x}, ${y}, ${z}`);
+            // You could use Three.js here to draw the joints if desired
+          }
+        }
+      } else {
+        alert("WebXR not supported on this device.");
+      }
+    }
+    startARWithHandTracking();
+  </script>
+</body>
+</html>
