@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slots</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h2>Slots</h2>
+        <div id="wallet">Balance: $1000</div>
+    </header>
+    <main>
+        <div id="slots-game">
+            <button onclick="spin()">Spin</button>
+            <div id="reels">
+                <span id="reel1">-</span>
+                <span id="reel2">-</span>
+                <span id="reel3">-</span>
+            </div>
+            <div id="result"></div>
+        </div>
+    </main>
+    <script>
+        let balance = 1000;
+
+        function updateBalance(amount) {
+            balance += amount;
+            document.getElementById("wallet").innerText = `Balance: $${balance}`;
+        }
+
+        function spin() {
+            const symbols = ["🍒", "🍋", "7", "🔔"];
+            let reel1 = symbols[Math.floor(Math.random() * symbols.length)];
+            let reel2 = symbols[Math.floor(Math.random() * symbols.length)];
+            let reel3 = symbols[Math.floor(Math.random() * symbols.length)];
+
+            document.getElementById("reel1").innerText = reel1;
+            document.getElementById("reel2").innerText = reel2;
+            document.getElementById("reel3").innerText = reel3;
+
+            checkWin(reel1, reel2, reel3);
+        }
+
+        function checkWin(reel1, reel2, reel3) {
+            if (reel1 === reel2 && reel2 === reel3) {
+                document.getElementById("result").innerText = "Jackpot! You win $50!";
+                updateBalance(50);
+            } else {
+                document.getElementById("result").innerText = "Try again!";
+                updateBalance(-10);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => updateBalance(0));
+    </script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebXR Gorilla Tag</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/libs/stats.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/vr/WebXRManager.js"></script>
+  <script>
+    // Initialize scene, camera, and renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 1.6, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    // Stats
+    const stats = new Stats();
+    document.body.appendChild(stats.dom);
+
+    // Ground
+    const groundGeometry = new THREE.PlaneGeometry(100, 100);
+    const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x008000 });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = 0;
+    scene.add(ground);
+
+    // Walls
+    const wallGeometry = new THREE.BoxGeometry(50, 10, 1);
+    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+    const walls = [
+      new THREE.Mesh(wallGeometry, wallMaterial),
+      new THREE.Mesh(wallGeometry, wallMaterial),
+      new THREE.Mesh(wallGeometry.clone().rotateY(Math.PI / 2), wallMaterial), // Side walls
+      new THREE.Mesh(wallGeometry.clone().rotateY(Math.PI / 2), wallMaterial)
+    ];
+    walls[0].position.set(0, 5, -25);
+    walls[1].position.set(0, 5, 25);
+    walls[2].position.set(-25, 5, 0);
+    walls[3].position.set(25, 5, 0);
+    walls.forEach(wall => scene.add(wall));
+
+    // Trees and platforms
+    const objects = [];
+    const treeMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+    const foliageMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+
+    function createTree(x, z) {
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3), treeMaterial);
+      trunk.position.set(x, 1.5, z);
+      const foliage = new THREE.Mesh(new THREE.SphereGeometry(1), foliageMaterial);
+      foliage.position.set(x, 3.5, z);
+      scene.add(trunk, foliage);
+      objects.push(trunk);
+    }
+
+    function createPlatform(x, y, z) {
+      const platform = new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 3), new THREE.MeshStandardMaterial({ color: 0xAAAAAA }));
+      platform.position.set(x, y, z);
+      scene.add(platform);
+      objects.push(platform);
+    }
+
+    createTree(5, -5);
+    createTree(-10, 10);
+    createPlatform(0, 2, 0);
+    createPlatform(10, 4, -10);
+
+    // Lights
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(10, 10, 10);
+    scene.add(light);
+
+    // Player and hand tracking
+    const player = { velocity: new THREE.Vector3(0, 0, 0), position: new THREE.Vector3(0, 1.6, 0) };
+    const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshStandardMaterial({ color: 0x0000ff }));
+    const rightHand = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshStandardMaterial({ color: 0xff00ff }));
+    scene.add(leftHand, rightHand);
+
+    function checkCollisions(position) {
+      const box = new THREE.Box3().setFromObject(camera);
+      for (const object of objects) {
+        const objectBox = new THREE.Box3().setFromObject(object);
+        if (box.intersectsBox(objectBox)) {
+          player.velocity.set(0, 0, 0); // Stop movement
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function updateLocomotion(frame) {
+      const session = renderer.xr.getSession();
+      const inputSources = session.inputSources;
+
+      inputSources.forEach(source => {
+        if (source.hand) {
+          const handPose = renderer.xr.getController(source.handedness === 'left' ? 0 : 1);
+          if (handPose) {
+            const handPosition = new THREE.Vector3().setFromMatrixPosition(handPose.matrixWorld);
+            if (source.handedness === 'left') leftHand.position.copy(handPosition);
+            else rightHand.position.copy(handPosition);
+
+            // Movement logic based on hand motion
+            const delta = handPosition.clone().sub(player.position);
+            player.velocity.add(delta.multiplyScalar(-0.1)); // Adjust scaling for smoother motion
+          }
+        }
+      });
+
+      // Apply velocity and check collisions
+      const nextPosition = player.position.clone().add(player.velocity);
+      if (!checkCollisions(nextPosition)) {
+        player.position.copy(nextPosition);
+        camera.position.copy(player.position);
+      }
+
+      // Dampen velocity
+      player.velocity.multiplyScalar(0.9);
+    }
+
+    // Render loop
+    renderer.setAnimationLoop((frame) => {
+      updateLocomotion(frame);
+      renderer.render(scene, camera);
+      stats.update();
+    });
+
+    // Start WebXR
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        navigator.xr.requestSession('immersive-vr').then(session => {
+          renderer.xr.setSession(session);
+        });
+      }
+    });
+  </script>
+</body>
+</html>

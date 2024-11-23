@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Console Desktop</title>
+    <style>
+        /* Basic Layout */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Courier New", Courier, monospace;
+            background-color: #111;
+            color: #00FF00; /* Console green text */
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #desktop {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            padding: 10px;
+            background-color: #222;
+        }
+
+        #desktop .program {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        #desktop .program:hover {
+            background-color: #444;
+        }
+
+        /* Program Window */
+        .program-window {
+            position: absolute;
+            background-color: #000;
+            border: 2px solid #00FF00;
+            padding: 20px;
+            width: 600px;
+            height: 400px;
+            display: none;
+            color: #00FF00;
+            font-family: monospace;
+        }
+
+        /* Fullscreen Program Window */
+        .fullscreen {
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+
+        /* Buttons */
+        .window-controls {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .close-btn, .fullscreen-btn {
+            background-color: #333;
+            color: #00FF00;
+            border: none;
+            padding: 5px 10px;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+
+        .close-btn:hover, .fullscreen-btn:hover {
+            background-color: #444;
+        }
+
+        /* Terminal input area */
+        .terminal-input {
+            width: 100%;
+            background-color: #111;
+            border: none;
+            color: #00FF00;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 14px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="desktop">
+        <!-- Programs listed on the console desktop -->
+        <div class="program" onclick="openProgram('program1')">
+            Program 1
+        </div>
+        <div class="program" onclick="openProgram('program2')">
+            Program 2
+        </div>
+        <div class="program" onclick="openProgram('program3')">
+            Program 3
+        </div>
+    </div>
+
+    <!-- Program Windows -->
+    <div id="program1-window" class="program-window">
+        <div class="window-controls">
+            <button class="fullscreen-btn" onclick="toggleFullscreen('program1')">Fullscreen</button>
+            <button class="close-btn" onclick="closeProgram('program1')">Close</button>
+        </div>
+        <h2>Program 1</h2>
+        <p>This is program 1's console output.</p>
+        <textarea class="terminal-input" placeholder="Type something..."></textarea>
+    </div>
+
+    <div id="program2-window" class="program-window">
+        <div class="window-controls">
+            <button class="fullscreen-btn" onclick="toggleFullscreen('program2')">Fullscreen</button>
+            <button class="close-btn" onclick="closeProgram('program2')">Close</button>
+        </div>
+        <h2>Program 2</h2>
+        <p>This is program 2's console output.</p>
+        <textarea class="terminal-input" placeholder="Type something..."></textarea>
+    </div>
+
+    <div id="program3-window" class="program-window">
+        <div class="window-controls">
+            <button class="fullscreen-btn" onclick="toggleFullscreen('program3')">Fullscreen</button>
+            <button class="close-btn" onclick="closeProgram('program3')">Close</button>
+        </div>
+        <h2>Program 3</h2>
+        <p>This is program 3's console output.</p>
+        <textarea class="terminal-input" placeholder="Type something..."></textarea>
+    </div>
+
+    <script>
+        function openProgram(programId) {
+            // Hide all program windows
+            const windows = document.querySelectorAll('.program-window');
+            windows.forEach(window => window.style.display = 'none');
+
+            // Show the selected program window
+            const programWindow = document.getElementById(programId + '-window');
+            programWindow.style.display = 'block';
+        }
+
+        function closeProgram(programId) {
+            const programWindow = document.getElementById(programId + '-window');
+            programWindow.style.display = 'none';
+        }
+
+        function toggleFullscreen(programId) {
+            const programWindow = document.getElementById(programId + '-window');
+            programWindow.classList.toggle('fullscreen');
+        }
+    </script>
+</body>
+</html>
