@@ -1,0 +1,25 @@
+{
+    "start": {
+      "text": "You are in a dimly lit cave. Will you proceed forward or go back?",
+      "choices": [
+        { "command": "forward", "next": "dark_hall" },
+        { "command": "back", "next": "exit" }
+      ]
+    },
+    "dark_hall": {
+      "text": "The hall is dark and full of strange noises. Do you explore or retreat?",
+      "choices": [
+        { "command": "explore", "next": "treasure_room" },
+        { "command": "retreat", "next": "start" }
+      ]
+    },
+    "exit": {
+      "text": "You leave the cave. Game Over.",
+      "choices": []
+    },
+    "treasure_room": {
+      "text": "You find a treasure chest! You win!",
+      "choices": []
+    }
+  }
+  
