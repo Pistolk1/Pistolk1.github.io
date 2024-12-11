@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Builder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, textarea, select, button {
+            width: calc(100% - 30px);
+            margin-bottom: 15px;
+            padding: 8px;
+            font-size: 16px;
+            display: inline-block;
+        }
+        .contact-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .skill-category {
+            margin-bottom: 15px;
+        }
+        #resume {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            display: none;
+        }
+        #export-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            text-align: center;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #export-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Create Your Resume</h1>
+    <form id="resume-form">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" placeholder="Your Name" required>
+
+        <label for="title">Current Job Title</label>
+        <input type="text" id="title" placeholder="e.g., Software Engineer" required>
+
+        <label>Contact Information</label>
+        <div class="contact-row">
+            <input type="checkbox" id="contact-email" value="Email">
+            <label for="contact-email">Email</label>
+            <input type="text" id="email" placeholder="Enter your email">
+        </div>
+        <div class="contact-row">
+            <input type="checkbox" id="contact-phone" value="Phone">
+            <label for="contact-phone">Phone</label>
+            <input type="text" id="phone" placeholder="Enter your phone number">
+        </div>
+        <div class="contact-row">
+            <input type="checkbox" id="contact-linkedin" value="LinkedIn">
+            <label for="contact-linkedin">LinkedIn</label>
+            <input type="text" id="linkedin" placeholder="Enter your LinkedIn URL">
+        </div>
+
+        <label for="summary">Professional Summary</label>
+        <textarea id="summary" rows="5" placeholder="Brief summary about yourself"></textarea>
+
+        <label for="skills">Skills</label>
+        <div id="skills">
+            <div class="skill-category">
+                <label>Technical Skills</label>
+                <label><input type="checkbox" value="JavaScript"> JavaScript</label>
+                <label><input type="checkbox" value="Python"> Python</label>
+                <label><input type="checkbox" value="HTML"> HTML</label>
+                <label><input type="checkbox" value="CSS"> CSS</label>
+                <label><input type="checkbox" value="Java"> Java</label>
+            </div>
+            <div class="skill-category">
+                <label>Creative Skills</label>
+                <label><input type="checkbox" value="Writing"> Writing</label>
+                <label><input type="checkbox" value="Painting"> Painting</label>
+                <label><input type="checkbox" value="Photography"> Photography</label>
+                <label><input type="checkbox" value="Acting"> Acting</label>
+                <label><input type="checkbox" value="Graphic Design"> Graphic Design</label>
+            </div>
+            <div class="skill-category">
+                <label>Practical Skills</label>
+                <label><input type="checkbox" value="Cooking"> Cooking</label>
+                <label><input type="checkbox" value="Carpentry"> Carpentry</label>
+                <label><input type="checkbox" value="Plumbing"> Plumbing</label>
+                <label><input type="checkbox" value="Electrical Work"> Electrical Work</label>
+                <label><input type="checkbox" value="Gardening"> Gardening</label>
+            </div>
+            <div class="skill-category">
+                <label>Soft Skills</label>
+                <label><input type="checkbox" value="Communication"> Communication</label>
+                <label><input type="checkbox" value="Teamwork"> Teamwork</label>
+                <label><input type="checkbox" value="Problem Solving"> Problem Solving</label>
+                <label><input type="checkbox" value="Leadership"> Leadership</label>
+                <label><input type="checkbox" value="Time Management"> Time Management</label>
+            </div>
+            <div class="skill-category">
+                <label>Sports & Physical Skills</label>
+                <label><input type="checkbox" value="Swimming"> Swimming</label>
+                <label><input type="checkbox" value="Cycling"> Cycling</label>
+                <label><input type="checkbox" value="Running"> Running</label>
+                <label><input type="checkbox" value="Yoga"> Yoga</label>
+                <label><input type="checkbox" value="Martial Arts"> Martial Arts</label>
+            </div>
+            <div>
+                <label for="custom-skill">Add Custom Skill</label>
+                <input type="text" id="custom-skill" placeholder="Enter custom skill">
+                <button type="button" id="add-skill">Add Skill</button>
+            </div>
+        </div>
+
+        <label for="education">Education</label>
+        <textarea id="education" rows="5" placeholder="e.g., B.Sc. in Computer Science"></textarea>
+
+        <label for="experience">Work Experience</label>
+        <div id="experience">
+            <textarea rows="5" placeholder="Job Title, Company, Description"></textarea>
+        </div>
+        <button type="button" id="add-experience">Add Another Job</button>
+
+        <label for="projects">Projects</label>
+        <div id="projects">
+            <textarea rows="5" placeholder="Project Name, Description"></textarea>
+        </div>
+        <button type="button" id="add-project">Add Another Project</button>
+
+        <button type="submit">Generate Resume</button>
+    </form>
+
+    <div id="resume" style="display:none;"></div>
+
+    <button id="export-btn" style="display:none;">Export as HTML</button>
+
+    <script>
+        const form = document.getElementById('resume-form');
+        const resumeDiv = document.getElementById('resume');
+        const skillsDiv = document.getElementById('skills');
+        const experienceDiv = document.getElementById('experience');
+        const projectsDiv = document.getElementById('projects');
+        const exportBtn = document.getElementById('export-btn');
+
+        document.getElementById('add-skill').addEventListener('click', () => {
+            const customSkillInput = document.getElementById('custom-skill');
+            const skillValue = customSkillInput.value.trim();
+            if (skillValue) {
+                const label = document.createElement('label');
+                label.innerHTML = `<input type="checkbox" value="${skillValue}"> ${skillValue}`;
+                skillsDiv.appendChild(label);
+                customSkillInput.value = '';
+            }
+        });
+
+        document.getElementById('add-experience').addEventListener('click', () => {
+            const textarea = document.createElement('textarea');
+            textarea.rows = 5;
+            textarea.placeholder = "Job Title, Company, Description";
+            experienceDiv.appendChild(textarea);
+        });
+
+        document.getElementById('add-project').addEventListener('click', () => {
+            const textarea = document.createElement('textarea');
+            textarea.rows = 5;
+            textarea.placeholder = "Project Name, Description";
+            projectsDiv.appendChild(textarea);
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const title = document.getElementById('title').value;
+
+            const contactInfo = [];
+            if (document.getElementById('contact-email').checked) {
+                contactInfo.push(`Email: ${document.getElementById('email').value}`);
+            }
+            if (document.getElementById('contact-phone').checked) {
+                contactInfo.push(`Phone: ${document.getElementById('phone').value}`);
+            }
+            if (document.getElementById('contact-linkedin').checked) {
+                contactInfo.push(`LinkedIn: ${document.getElementById('linkedin').value}`);
+            }
+
+            const summary = document.getElementById('summary').value;
+            const skills = Array.from(document.querySelectorAll('#skills input:checked')).map(input => input.value);
+            const education = document.getElementById('education').value;
+            const experience = Array.from(experienceDiv.querySelectorAll('textarea')).map(textarea => textarea.value);
+            const projects = Array.from(projectsDiv.querySelectorAll('textarea')).map(textarea => textarea.value);
+
+            const resumeHTML = `
+                <h2>${name}</h2>
+                <h3>${title}</h3>
+                <h3>Contact Information</h3>
+                <ul>
+                    ${contactInfo.map(info => `<li>${info}</li>`).join('')}
+                </ul>
+                <h3>Professional Summary</h3>
+                <p>${summary}</p>
+                <h3>Skills</h3>
+                <ul>
+                    ${skills.map(skill => `<li>${skill}</li>`).join('')}
+                </ul>
+                <h3>Education</h3>
+                <p>${education}</p>
+                <h3>Experience</h3>
+                <ul>
+                    ${experience.map(exp => `<li>${exp}</li>`).join('')}
+                </ul>
+                <h3>Projects</h3>
+                <ul>
+                    ${projects.map(project => `<li>${project}</li>`).join('')}
+                </ul>
+            `;
+            resumeDiv.innerHTML = resumeHTML;
+            resumeDiv.style.display = 'block';
+            exportBtn.style.display = 'block';
+        });
+
+        exportBtn.addEventListener('click', () => {
+            const resumeContent = resumeDiv.innerHTML;
+            const blob = new Blob([resumeContent], { type: 'text/html' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'resume.html';
+            link.click();
+        });
+    </script>
+</body>
+</html>

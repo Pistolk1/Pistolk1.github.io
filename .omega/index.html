@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teleport Gauntlet 3D</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script type="module">
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.module.js';
+        import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/controls/OrbitControls.js';
+
+        // Scene setup
+        const canvas = document.getElementById('gameCanvas');
+        const renderer = new THREE.WebGLRenderer({ canvas });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x202020);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 10);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 10, 10);
+        scene.add(directionalLight);
+
+        // Player setup
+        const playerGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+        const playerMaterial = new THREE.MeshStandardMaterial({ color: 'blue' });
+        const player = new THREE.Mesh(playerGeometry, playerMaterial);
+        player.position.set(0, 0.5, 0);
+        scene.add(player);
+
+        // Obstacles setup
+        const obstacles = [];
+        const obstacleMaterial = new THREE.MeshStandardMaterial({ color: 'gray' });
+
+        function createObstacle(x, y, z, width, height, depth) {
+            const obstacleGeometry = new THREE.BoxGeometry(width, height, depth);
+            const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
+            obstacle.position.set(x, y, z);
+            scene.add(obstacle);
+            obstacles.push(obstacle);
+        }
+
+        createObstacle(0, 0.5, -5, 2, 1, 1);
+        createObstacle(3, 0.5, -2, 1.5, 1, 1);
+
+        // Pellets setup
+        const pellets = [];
+        const pelletGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+        const pelletMaterial = new THREE.MeshStandardMaterial({ color: 'red' });
+
+        function shootPellet(target) {
+            const pellet = new THREE.Mesh(pelletGeometry, pelletMaterial);
+            pellet.position.copy(player.position);
+            pellet.target = target;
+            pellets.push(pellet);
+            scene.add(pellet);
+        }
+
+        // Teleportation function
+        function teleportTo(position) {
+            player.position.copy(position);
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            pellets.forEach((pellet, index) => {
+                const direction = new THREE.Vector3().subVectors(pellet.target, pellet.position).normalize();
+                pellet.position.addScaledVector(direction, 0.2);
+
+                if (pellet.position.distanceTo(pellet.target) < 0.2) {
+                    teleportTo(pellet.target);
+                    scene.remove(pellet);
+                    pellets.splice(index, 1);
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        // Mouse event listener
+        window.addEventListener('click', (event) => {
+            const mouse = new THREE.Vector2(
+                (event.clientX / window.innerWidth) * 2 - 1,
+                -(event.clientY / window.innerHeight) * 2 + 1
+            );
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(obstacles);
+
+            if (intersects.length > 0) {
+                shootPellet(intersects[0].point);
+            }
+        });
+
+        animate();
+    </script>
+</body>
+</html>
