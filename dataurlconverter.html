@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 to OBJ Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+
+        input, button {
+            margin: 10px;
+            padding: 10px;
+        }
+
+        textarea {
+            width: 90%;
+            height: 150px;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Base64 to OBJ Converter</h1>
+    <p>Paste your Base64 Data URL below and click "Convert" to download it as a .obj file.</p>
+
+    <textarea id="base64Input" placeholder="Paste your Base64 Data URL here..."></textarea>
+    <br>
+    <button onclick="convertToOBJ()">Convert to OBJ</button>
+
+    <script>
+        function convertToOBJ() {
+            const base64Input = document.getElementById('base64Input').value.trim();
+
+            if (!base64Input) {
+                alert('Please enter a Base64 Data URL.');
+                return;
+            }
+
+            try {
+                // Decode Base64 data
+                const objData = atob(base64Input.split(',')[1]);
+
+                // Create a Blob from the decoded data
+                const blob = new Blob([objData], { type: 'text/plain' });
+
+                // Create a link element to download the .obj file
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'model.obj';
+                link.textContent = 'Download OBJ';
+
+                // Trigger the download
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error(error);
+                alert('Invalid Base64 Data URL or conversion failed. Please check the input.');
+            }
+        }
+    </script>
+</body>
+</html>
