@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Dating Simulator</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #winMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            color: white;
+            display: none;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div id="winMessage">You Found Your Final Love! &#x2764;</div>
+    <script>
+        // Scene, Camera, Renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Ground Plane
+        const groundGeometry = new THREE.PlaneGeometry(100, 100);
+        const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x55aa55, side: THREE.DoubleSide });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
+
+        // Player (Camera controls the player position)
+        let playerSpeed = 0.2;
+        let lovePoints = 0;
+
+        // NPCs (Non-Player Characters)
+        const npcs = [];
+        function createNPC(x, z) {
+            const npcGeometry = new THREE.BoxGeometry(1, 2, 1);
+            const npcMaterial = new THREE.MeshBasicMaterial({ color: 0xaa0000 });
+            const npc = new THREE.Mesh(npcGeometry, npcMaterial);
+            npc.position.set(x, 1, z);
+            scene.add(npc);
+            npcs.push(npc);
+        }
+
+        // Spawn 5 NPCs
+        createNPC(5, 5);
+        createNPC(-5, -5);
+        createNPC(10, -10);
+        createNPC(-10, 10);
+        createNPC(0, 15);
+
+        // Keyboard Controls
+        const keys = {};
+        document.addEventListener('keydown', (e) => keys[e.key] = true);
+        document.addEventListener('keyup', (e) => keys[e.key] = false);
+
+        // Player Movement
+        camera.position.set(0, 2, 10); // Starting position
+
+        function playerMovement() {
+            if (keys['w'] || keys['ArrowUp']) camera.position.z -= playerSpeed;
+            if (keys['s'] || keys['ArrowDown']) camera.position.z += playerSpeed;
+            if (keys['a'] || keys['ArrowLeft']) camera.position.x -= playerSpeed;
+            if (keys['d'] || keys['ArrowRight']) camera.position.x += playerSpeed;
+        }
+
+        // Check for NPC interaction
+        function checkInteractions() {
+            for (let i = 0; i < npcs.length; i++) {
+                const npc = npcs[i];
+                const distance = camera.position.distanceTo(npc.position);
+                if (distance < 2) {
+                    lovePoints++;
+                    console.log(`Love Points: ${lovePoints}`);
+                    scene.remove(npc);
+                    npcs.splice(i, 1);
+                    if (lovePoints >= 5) {
+                        document.getElementById('winMessage').style.display = 'block';
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Game Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            playerMovement();
+            checkInteractions();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

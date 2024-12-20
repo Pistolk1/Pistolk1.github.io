@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebVR Game with Gorilla Locomotion</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <!-- Environment -->
+      <a-sky color="#87CEEB"></a-sky>
+      <a-plane rotation="-90 0 0" width="100" height="100" color="#7BC8A4"></a-plane>
+
+      <!-- Player Rig -->
+      <a-entity id="player" gorilla-movement>
+        <!-- Camera -->
+        <a-camera position="0 1.6 0">
+          <a-entity oculus-touch-controls="hand: left"></a-entity>
+          <a-entity oculus-touch-controls="hand: right"></a-entity>
+        </a-camera>
+      </a-entity>
+
+      <!-- Gorilla Locomotion Component -->
+      <script>
+        AFRAME.registerComponent('gorilla-movement', {
+          schema: {
+            velocityLimit: { type: 'number', default: 2 },
+            jumpMultiplier: { type: 'number', default: 1.5 },
+            maxArmLength: { type: 'number', default: 1.5 },
+          },
+
+          init: function () {
+            this.leftHand = null;
+            this.rightHand = null;
+            this.camera = null;
+            this.lastLeftHandPos = new THREE.Vector3();
+            this.lastRightHandPos = new THREE.Vector3();
+            this.currentVelocity = new THREE.Vector3();
+
+            this.el.addEventListener('loaded', () => {
+              this.leftHand = this.el.querySelector('[oculus-touch-controls][hand="left"]');
+              this.rightHand = this.el.querySelector('[oculus-touch-controls][hand="right"]');
+              this.camera = this.el.querySelector('a-camera');
+
+              if (this.leftHand && this.rightHand && this.camera) {
+                this.lastLeftHandPos.copy(this.leftHand.object3D.position);
+                this.lastRightHandPos.copy(this.rightHand.object3D.position);
+              }
+            });
+          },
+
+          tick: function (time, deltaTime) {
+            if (!this.leftHand || !this.rightHand || !this.camera) return;
+
+            const delta = deltaTime / 1000;
+
+            const leftHandPos = this.leftHand.object3D.position.clone();
+            const rightHandPos = this.rightHand.object3D.position.clone();
+            const headPos = this.camera.object3D.position.clone();
+
+            const leftHandMove = leftHandPos.clone().sub(this.lastLeftHandPos);
+            const rightHandMove = rightHandPos.clone().sub(this.lastRightHandPos);
+
+            // Limit hand distance
+            if (leftHandMove.length() > this.data.maxArmLength) {
+              leftHandMove.setLength(this.data.maxArmLength);
+            }
+
+            if (rightHandMove.length() > this.data.maxArmLength) {
+              rightHandMove.setLength(this.data.maxArmLength);
+            }
+
+            // Average hand movement for locomotion
+            const movement = leftHandMove.add(rightHandMove).multiplyScalar(0.5);
+            movement.y = 0; // Prevent flying
+
+            const velocity = movement.clone().multiplyScalar(this.data.jumpMultiplier);
+            if (velocity.length() > this.data.velocityLimit) {
+              velocity.setLength(this.data.velocityLimit);
+            }
+
+            this.el.object3D.position.add(velocity);
+
+            // Update last positions
+            this.lastLeftHandPos.copy(leftHandPos);
+            this.lastRightHandPos.copy(rightHandPos);
+          },
+        });
+      </script>
+    </a-scene>
+  </body>
+</html>
