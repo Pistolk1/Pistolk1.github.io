@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Binary Pixel Art Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    canvas {
+      border: 1px solid #000;
+      margin: 20px auto;
+      display: block;
+    }
+    .controls {
+      margin: 10px auto;
+    }
+    #loginPopup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px;
+      background: #fff;
+      border: 1px solid #ccc;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      display: none;
+    }
+    #loginPopup button {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Binary Pixel Art Fingerprint Login</h1>
+<canvas id="pixelCanvas" width="160" height="160"></canvas>
+<div class="controls">
+  <button id="clearCanvas">Clear Canvas</button>
+  <button id="generateFingerprint">Generate Fingerprint</button>
+  <button id="registerAccount">Register Account</button>
+</div>
+<p id="fingerprint"></p>
+
+<div id="loginPopup">
+  <h2>Login</h2>
+  <p>Please provide your fingerprint to sign in.</p>
+  <input type="text" id="inputFingerprint" placeholder="Paste your fingerprint here">
+  <button id="submitLogin">Submit</button>
+</div>
+
+<script>
+class BinaryPixelArt {
+  constructor(canvasId) {
+    this.canvas = document.getElementById(canvasId);
+    this.ctx = this.canvas.getContext('2d');
+    this.cellSize = 10;
+    this.rows = 16;
+    this.cols = 16;
+    this.pixelData = Array.from({ length: this.rows }, () => Array(this.cols).fill(0));
+    this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+    this.drawGrid();
+  }
+
+  drawGrid() {
+    for (let row = 0; row < this.rows; row++) {
+      for (let col = 0; col < this.cols; col++) {
+        this.ctx.fillStyle = this.pixelData[row][col] === 1 ? '#000' : '#fff';
+        this.ctx.fillRect(col * this.cellSize, row * this.cellSize, this.cellSize, this.cellSize);
+        this.ctx.strokeRect(col * this.cellSize, row * this.cellSize, this.cellSize, this.cellSize);
+      }
+    }
+  }
+
+  handleCanvasClick(event) {
+    const rect = this.canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const col = Math.floor(x / this.cellSize);
+    const row = Math.floor(y / this.cellSize);
+    this.pixelData[row][col] = this.pixelData[row][col] === 0 ? 1 : 0;
+    this.drawGrid();
+  }
+
+  clearGrid() {
+    this.pixelData = Array.from({ length: this.rows }, () => Array(this.cols).fill(0));
+    this.drawGrid();
+  }
+
+  generateFingerprint() {
+    return btoa(this.pixelData.flat().join(''));
+  }
+}
+
+class FingerprintAuth {
+  constructor() {
+    this.accounts = {}; // Store accounts with fingerprints
+  }
+
+  register(fingerprint) {
+    if (this.accounts[fingerprint]) {
+      return false; // Account already exists
+    }
+    this.accounts[fingerprint] = true;
+    return true; // Registration successful
+  }
+
+  verify(fingerprint) {
+    return !!this.accounts[fingerprint];
+  }
+}
+
+const pixelArt = new BinaryPixelArt('pixelCanvas');
+const fingerprintAuth = new FingerprintAuth();
+const fingerprintDisplay = document.getElementById('fingerprint');
+const loginPopup = document.getElementById('loginPopup');
+
+// Clear canvas
+document.getElementById('clearCanvas').addEventListener('click', () => {
+  pixelArt.clearGrid();
+  fingerprintDisplay.textContent = '';
+});
+
+// Generate fingerprint
+document.getElementById('generateFingerprint').addEventListener('click', () => {
+  const fingerprint = pixelArt.generateFingerprint();
+  fingerprintDisplay.textContent = `Fingerprint: ${fingerprint}`;
+});
+
+// Register account
+document.getElementById('registerAccount').addEventListener('click', () => {
+  const fingerprint = pixelArt.generateFingerprint();
+  if (fingerprintAuth.register(fingerprint)) {
+    alert('Account registered successfully!');
+  } else {
+    alert('This fingerprint is already registered.');
+  }
+});
+
+// Simulate login process
+function showLoginPopup() {
+  loginPopup.style.display = 'block';
+}
+
+function hideLoginPopup() {
+  loginPopup.style.display = 'none';
+}
+
+// Login button
+document.getElementById('submitLogin').addEventListener('click', () => {
+  const inputFingerprint = document.getElementById('inputFingerprint').value;
+  if (fingerprintAuth.verify(inputFingerprint)) {
+    alert('Login successful!');
+    hideLoginPopup();
+  } else {
+    alert('Fingerprint not recognized. Please try again or register an account.');
+  }
+});
+
+// Simulate opening login popup (for demo purposes, show it on page load)
+setTimeout(showLoginPopup, 2000);
+</script>
+
+</body>
+</html>

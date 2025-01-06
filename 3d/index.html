@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raycasting Engine with Level Editor</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      display: block;
+    }
+    #menu {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: white;
+    }
+    #menu button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #editor {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #333;
+      display: none;
+      overflow: hidden;
+    }
+    #toolbar {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+    #toolbar button {
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #gridCanvas {
+      display: block;
+      margin: auto;
+      background: #222;
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <h1>Raycasting Engine</h1>
+    <button onclick="startGame()">Start Game</button>
+    <button onclick="openEditor()">Level Editor</button>
+  </div>
+  <canvas id="gameCanvas" style="display: none;"></canvas>
+  <div id="editor">
+    <div id="toolbar">
+      <button onclick="setTool('wall')">Wall</button>
+      <button onclick="setTool('floor')">Floor</button>
+      <button onclick="setTool('object')">Object</button>
+      <button onclick="setTool('player')">Player Start</button>
+      <button onclick="saveLevel()">Save Level</button>
+      <button onclick="loadLevel()">Load Level</button>
+      <button onclick="closeEditor()">Back to Menu</button>
+    </div>
+    <canvas id="gridCanvas"></canvas>
+  </div>
+  <script>
+    let currentTool = 'wall';
+    const editorGrid = [];
+    const gridCanvas = document.getElementById('gridCanvas');
+    const gridCtx = gridCanvas.getContext('2d');
+
+    const TILE_SIZE = 32;
+    const GRID_ROWS = 20;
+    const GRID_COLS = 20;
+
+    gridCanvas.width = GRID_COLS * TILE_SIZE;
+    gridCanvas.height = GRID_ROWS * TILE_SIZE;
+
+    // Initialize editor grid with empty values
+    for (let y = 0; y < GRID_ROWS; y++) {
+      const row = [];
+      for (let x = 0; x < GRID_COLS; x++) {
+        row.push(0);
+      }
+      editorGrid.push(row);
+    }
+
+    function drawGrid() {
+      gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+      for (let y = 0; y < GRID_ROWS; y++) {
+        for (let x = 0; x < GRID_COLS; x++) {
+          const value = editorGrid[y][x];
+          if (value === 1) gridCtx.fillStyle = '#8B0000'; // Wall
+          else if (value === 2) gridCtx.fillStyle = '#FFD700'; // Object
+          else if (value === 3) gridCtx.fillStyle = '#00FF00'; // Player Start
+          else gridCtx.fillStyle = '#333'; // Floor
+
+          gridCtx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+          gridCtx.strokeStyle = '#555';
+          gridCtx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+      }
+    }
+
+    function setTool(tool) {
+      currentTool = tool;
+    }
+
+    function saveLevel() {
+      const levelData = JSON.stringify(editorGrid);
+      const blob = new Blob([levelData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'level.json';
+      a.click();
+
+      URL.revokeObjectURL(url);
+    }
+
+    function loadLevel() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const loadedGrid = JSON.parse(e.target.result);
+          for (let y = 0; y < GRID_ROWS; y++) {
+            for (let x = 0; x < GRID_COLS; x++) {
+              editorGrid[y][x] = loadedGrid[y][x] || 0;
+            }
+          }
+          drawGrid();
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+
+    function openEditor() {
+      document.getElementById('menu').style.display = 'none';
+      document.getElementById('editor').style.display = 'block';
+      drawGrid();
+    }
+
+    function closeEditor() {
+      document.getElementById('editor').style.display = 'none';
+      document.getElementById('menu').style.display = 'block';
+    }
+
+    function handleGridClick(event) {
+      const rect = gridCanvas.getBoundingClientRect();
+      const x = Math.floor((event.clientX - rect.left) / TILE_SIZE);
+      const y = Math.floor((event.clientY - rect.top) / TILE_SIZE);
+
+      if (currentTool === 'wall') editorGrid[y][x] = 1;
+      else if (currentTool === 'floor') editorGrid[y][x] = 0;
+      else if (currentTool === 'object') editorGrid[y][x] = 2;
+      else if (currentTool === 'player') editorGrid[y][x] = 3;
+
+      drawGrid();
+    }
+
+    gridCanvas.addEventListener('click', handleGridClick);
+
+    function startGame() {
+      fetch('level.json')
+        .then((response) => response.json())
+        .then((levelData) => {
+          console.log('Loaded level:', levelData);
+          alert('Game starting with loaded level...');
+        })
+        .catch((error) => {
+          console.error('Error loading level:', error);
+        });
+    }
+  </script>
+</body>
+</html>

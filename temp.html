@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BluePixel DE</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #2d4059;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        .taskbar {
+            background-color: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            height: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        .window {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            color: #00ff00;
+            display: none;
+        }
+
+        .window-header {
+            height: 30px;
+            background-color: #2d4059;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            cursor: move;
+            color: white;
+        }
+
+        .close-button {
+            margin-left: auto;
+            cursor: pointer;
+            color: red;
+        }
+
+        .calculator-buttons button {
+            width: 25%;
+            height: 50px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .calculator-display {
+            background-color: #333;
+            color: white;
+            text-align: right;
+            font-size: 24px;
+            padding: 10px;
+        }
+
+        .notes {
+            width: 100%;
+            height: calc(100% - 30px);
+            background: transparent;
+            color: white;
+            border: none;
+            resize: none;
+            padding: 10px;
+            outline: none;
+        }
+
+        .icon-bar {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 50px;
+            height: 50px;
+            background: black;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .icon:hover {
+            transform: scale(1.1);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="taskbar">
+        <div class="taskbar-left">
+            <span>Finder</span>
+        </div>
+        <div class="taskbar-right">
+            <span id="clock"></span>
+        </div>
+    </div>
+
+    <div id="terminal" class="window" style="width: 600px; height: 400px;">
+        <div class="window-header">
+            Terminal
+            <span class="close-button" onclick="closeWindow('terminal')">X</span>
+        </div>
+        <div style="padding: 10px; height: calc(100% - 30px); overflow-y: auto;">
+            <div id="terminal-output">Welcome to Terminal</div>
+            <form id="terminal-form">
+                <span>$</span>
+                <input id="terminal-input" style="width: calc(100% - 20px); background: black; color: white; border: none; outline: none;" autofocus />
+            </form>
+        </div>
+    </div>
+
+    <div id="calculator" class="window" style="width: 300px; height: 400px;">
+        <div class="window-header">
+            Calculator
+            <span class="close-button" onclick="closeWindow('calculator')">X</span>
+        </div>
+        <div class="calculator-display" id="calc-display">0</div>
+        <div class="calculator-buttons">
+            <button onclick="handleCalcButton('7')">7</button>
+            <button onclick="handleCalcButton('8')">8</button>
+            <button onclick="handleCalcButton('9')">9</button>
+            <button onclick="handleCalcButton('/')">/</button>
+            <button onclick="handleCalcButton('4')">4</button>
+            <button onclick="handleCalcButton('5')">5</button>
+            <button onclick="handleCalcButton('6')">6</button>
+            <button onclick="handleCalcButton('*')">*</button>
+            <button onclick="handleCalcButton('1')">1</button>
+            <button onclick="handleCalcButton('2')">2</button>
+            <button onclick="handleCalcButton('3')">3</button>
+            <button onclick="handleCalcButton('-')">-</button>
+            <button onclick="handleCalcButton('C')">C</button>
+            <button onclick="handleCalcButton('0')">0</button>
+            <button onclick="handleCalcButton('=')">=</button>
+            <button onclick="handleCalcButton('+')">+</button>
+        </div>
+    </div>
+
+    <div id="notes" class="window" style="width: 400px; height: 500px;">
+        <div class="window-header">
+            Notes
+            <span class="close-button" onclick="closeWindow('notes')">X</span>
+        </div>
+        <textarea id="notes-content" class="notes" placeholder="Start typing..."></textarea>
+    </div>
+
+    <div class="icon-bar">
+        <div class="icon" onclick="openWindow('terminal')">T</div>
+        <div class="icon" onclick="openWindow('calculator')">C</div>
+        <div class="icon" onclick="openWindow('notes')">N</div>
+    </div>
+
+    <script>
+        const openWindow = (id) => {
+            document.getElementById(id).style.display = 'block';
+        };
+
+        const closeWindow = (id) => {
+            document.getElementById(id).style.display = 'none';
+        };
+
+        const updateClock = () => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+        };
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        const terminalForm = document.getElementById('terminal-form');
+        const terminalInput = document.getElementById('terminal-input');
+        const terminalOutput = document.getElementById('terminal-output');
+
+        terminalForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const command = terminalInput.value;
+            terminalOutput.innerHTML += `<div>$ ${command}</div><div>Command not found</div>`;
+            terminalInput.value = '';
+        });
+
+        let calcDisplay = '0';
+
+        const handleCalcButton = (value) => {
+            const displayElement = document.getElementById('calc-display');
+            if (value === 'C') {
+                calcDisplay = '0';
+            } else if (value === '=') {
+                try {
+                    calcDisplay = eval(calcDisplay).toString();
+                } catch {
+                    calcDisplay = 'Error';
+                }
+            } else {
+                calcDisplay = calcDisplay === '0' ? value : calcDisplay + value;
+            }
+            displayElement.innerText = calcDisplay;
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Binary Pixel Art Example</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    canvas {
+      border: 1px solid #000;
+      margin: 20px auto;
+      display: block;
+    }
+    .controls {
+      margin: 10px auto;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Binary Pixel Art Example</h1>
+<canvas id="pixelCanvas" width="160" height="160"></canvas>
+<div class="controls">
+  <button id="clearCanvas">Clear Canvas</button>
+  <button id="generateFingerprint">Generate Fingerprint</button>
+  <button id="registerAccount">Register Account</button>
+  <button id="login">Login</button>
+</div>
+<p id="output"></p>
+
+<script type="module">
+  import { BinaryPixelArt, FingerprintAuth } from './binary_pixel_art_library.js';
+
+  const pixelArt = new BinaryPixelArt('pixelCanvas');
+  const auth = new FingerprintAuth();
+  const output = document.getElementById('output');
+
+  // Clear canvas
+  document.getElementById('clearCanvas').addEventListener('click', () => {
+    pixelArt.clearGrid();
+    output.textContent = '';
+  });
+
+  // Generate fingerprint
+  document.getElementById('generateFingerprint').addEventListener('click', () => {
+    const fingerprint = pixelArt.generateFingerprint();
+    output.textContent = `Generated Fingerprint: ${fingerprint}`;
+  });
+
+  // Register fingerprint
+  document.getElementById('registerAccount').addEventListener('click', () => {
+    const fingerprint = pixelArt.generateFingerprint();
+    if (auth.register(fingerprint)) {
+      output.textContent = 'Account registered successfully!';
+    } else {
+      output.textContent = 'This fingerprint is already registered.';
+    }
+  });
+
+  // Simulate login
+  document.getElementById('login').addEventListener('click', () => {
+    const fingerprint = pixelArt.generateFingerprint();
+    if (auth.verify(fingerprint)) {
+      output.textContent = 'Login successful!';
+    } else {
+      output.textContent = 'Fingerprint not recognized. Please register first.';
+    }
+  });
+</script>
+
+</body>
+</html>

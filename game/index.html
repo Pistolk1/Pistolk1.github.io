@@ -1,39 +1,39 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>WebVR Game with Modular Circuits and Player Logic</title>
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="player.js"></script>
-    <script src="circuits.js"></script>
-  </head>
-  <body>
-    <a-scene>
-      <!-- Environment -->
-      <a-sky color="#87CEEB"></a-sky>
-      <a-plane rotation="-90 0 0" width="100" height="100" color="#7BC8A4"></a-plane>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Platformer Game</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #222;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid #fff;
+        }
+    </style>
+</head>
+<body>
+    <script src="platformer.js"></script>
+    <script>
+        // Define the player object here to avoid the ReferenceError
+        const player = { x: 50, y: 50, dx: 0, dy: 0, width: 30, height: 30 };
 
-      <!-- Player Rig -->
-      <a-entity id="player" player>
-        <a-camera position="0 1.6 0">
-          <a-entity oculus-touch-controls="hand: left"></a-entity>
-          <a-entity oculus-touch-controls="hand: right"></a-entity>
-        </a-camera>
-      </a-entity>
-
-      <!-- Interactable Box -->
-      <a-box id="grab-box" position="0 1 -2" color="#FF6347" dynamic-body></a-box>
-
-      <!-- Pressure Plate -->
-      <a-box id="pressure-plate" position="2 0.05 -2" width="1" height="0.1" depth="1" color="#A9A9A9"></a-box>
-
-      <!-- Circuit System -->
-      <a-entity id="circuit">
-        <!-- Example Door -->
-        <a-box id="door" position="4 1 -2" width="1" height="2" depth="0.1" color="#8B4513"></a-box>
-
-        <!-- Wire -->
-        <a-entity circuit-wire="start: #pressure-plate; end: #door; color: #00FF00; thickness: 0.1"></a-entity>
-      </a-entity>
-    </a-scene>
-  </body>
+        // Ensure the game initializes correctly
+        window.addEventListener('load', () => {
+            if (typeof loop === 'function') {
+                loop(); // Start the game loop
+            } else {
+                console.error("Game loop function not found!");
+            }
+        });
+    </script>
+</body>
 </html>

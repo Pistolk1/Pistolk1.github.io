@@ -19,243 +19,81 @@
             padding: 10px;
             font-size: 16px;
         }
-        .window {
-            position: absolute;
-            border: 1px solid #000;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            user-select: none;
-            resize: both;
-            overflow: auto;
-        }
-        .window.header {
-            height: 40px;
-            background-color: #ccc;
-            cursor: move;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 5px;
-            box-sizing: border-box;
-            user-select: none;
-        }
-        .window.header input {
-            flex: 1;
-            margin-right: 5px;
-        }
-        .window.header button {
-            background: #66f;
-            color: white;
-            border: none;
-            padding: 5px;
-            cursor: pointer;
-        }
-        .window.header button.close {
-            background: red;
-        }
-        .window.header button.maximize {
-            background: gold;
-        }
-        .controls {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 1000000;
-        }
-        .controls button {
-            background: #666;
-            color: white;
-            border: none;
-            padding: 10px;
-            margin: 5px;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
     <h1>Install Ketron Virtual Desktop</h1>
     <p>
-        Click the "Generate Bookmarklet" button below to create the bookmarklet. 
-        You will then be prompted to configure your bookmarklet settings.
+        Click "Generate Bookmarklet" to create a bookmarklet for <strong>BluePixel DE</strong> (../../index.html) or embed a custom HTML file.
     </p>
     <button id="install-btn">Generate Bookmarklet</button>
 
     <div id="setup">
         <h2>Bookmarklet Setup</h2>
         <label for="bookmarklet-name">Bookmarklet Name:</label>
-        <input type="text" id="bookmarklet-name" value="Ketron Virtual Desktop"><br>
+        <input type="text" id="bookmarklet-name" value="BluePixel DE"><br>
+        <label for="html-file">Upload Custom HTML File (optional):</label>
+        <input type="file" id="html-file" accept=".html"><br>
         <button id="generate-bookmarklet">Generate Bookmarklet</button>
     </div>
 
     <p id="instructions" style="display: none;">
-        Drag the "Ketron Virtual Desktop" link to your bookmarks bar to install the virtual desktop bookmarklet. 
-        Click the bookmarklet to start using the virtual desktop where you can open, resize, and manage multiple website windows.
+        Drag the generated link to your bookmarks bar. Click the bookmarklet to launch <strong>BluePixel DE</strong> or your custom HTML file.
     </p>
 
     <script>
-        document.getElementById('install-btn').addEventListener('click', function() {
+        document.getElementById('install-btn').addEventListener('click', function () {
             document.getElementById('setup').style.display = 'block';
         });
 
-        document.getElementById('generate-bookmarklet').addEventListener('click', function() {
-            const name = document.getElementById('bookmarklet-name').value;
+        document.getElementById('generate-bookmarklet').addEventListener('click', function () {
+            const name = document.getElementById('bookmarklet-name').value || 'BluePixel DE';
+            const fileInput = document.getElementById('html-file');
+            const file = fileInput.files[0];
 
-            const bookmarkletCode = `
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const fileContent = e.target.result;
+
+                    // Escape special characters for safe embedding
+                    const escapedContent = fileContent
+                        .replace(/\\/g, '\\\\')
+                        .replace(/`/g, '\\`')
+                        .replace(/\$/g, '\\$');
+
+                    const bookmarkletCode = `
 javascript:(function() {
-    const style = document.createElement('style');
-    style.textContent = \`
-        .window {
-            position: absolute;
-            border: 1px solid #000;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            user-select: none;
-            resize: both;
-            overflow: auto;
-        }
-        .window.header {
-            height: 40px;
-            background-color: #ccc;
-            cursor: move;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 5px;
-            box-sizing: border-box;
-            user-select: none;
-        }
-        .window.header input {
-            flex: 1;
-            margin-right: 5px;
-        }
-        .window.header button {
-            background: #66f;
-            color: white;
-            border: none;
-            padding: 5px;
-            cursor: pointer;
-        }
-        .window.header button.close {
-            background: red;
-        }
-        .window.header button.maximize {
-            background: gold;
-        }
-        .controls {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 1000000;
-        }
-        .controls button {
-            background: #666;
-            color: white;
-            border: none;
-            padding: 10px;
-            margin: 5px;
-            cursor: pointer;
-        }
-    \`;
-    document.head.appendChild(style);
-
-    const desktop = document.createElement('div');
-    desktop.id = 'virtual-desktop';
-    document.body.appendChild(desktop);
-
-    const controls = document.createElement('div');
-    controls.className = 'controls';
-    controls.innerHTML = \`
-        <button id="add-window">Add Window</button>
-        <button id="load-file-button">Load Index File</button>
-    \`;
-    document.body.appendChild(controls);
-
-    function makeDraggable(el) {
-        let isDragging = false;
-        let offsetX, offsetY;
-        const header = el.querySelector('.header');
-        header.addEventListener('mousedown', function(e) {
-            isDragging = true;
-            offsetX = e.clientX - el.getBoundingClientRect().left;
-            offsetY = e.clientY - el.getBoundingClientRect().top;
-            el.style.zIndex = 999999;
-        });
-        document.addEventListener('mousemove', function(e) {
-            if (isDragging) {
-                el.style.left = e.clientX - offsetX + 'px';
-                el.style.top = e.clientY - offsetY + 'px';
-            }
-        });
-        document.addEventListener('mouseup', function() {
-            isDragging = false;
-        });
-    }
-
-    function createWindow(content, x = 100, y = 100, width = 400, height = 300) {
-        const win = document.createElement('div');
-        win.className = 'window';
-        win.style.left = \`\${x}px\`;
-        win.style.top = \`\${y}px\`;
-        win.style.width = \`\${width}px\`;
-        win.style.height = \`\${height}px\`;
-        win.innerHTML = \`
-            <div class="header">
-                <input type="text" value="Custom Window" readonly>
-                <button class="close">X</button>
-                <button class="maximize">[]</button>
-            </div>
-            <div class="content"></div>
-        \`;
-        const contentDiv = win.querySelector('.content');
-        contentDiv.innerHTML = content;  // Add the loaded content from the server
-
-        desktop.appendChild(win);
-        const closeButton = win.querySelector('.header button.close');
-        closeButton.addEventListener('click', function() {
-            win.remove();
-        });
-
-        const maximizeButton = win.querySelector('.header button.maximize');
-        maximizeButton.addEventListener('click', function() {
-            if (win.classList.contains('maximized')) {
-                win.style.width = \`\${win.dataset.originalWidth}px\`;
-                win.style.height = \`\${win.dataset.originalHeight}px\`;
-                win.style.left = \`\${win.dataset.originalLeft}px\`;
-                win.style.top = \`\${win.dataset.originalTop}px\`;
-                win.classList.remove('maximized');
-            } else {
-                win.dataset.originalWidth = win.offsetWidth;
-                win.dataset.originalHeight = win.offsetHeight;
-                win.dataset.originalLeft = win.offsetLeft;
-                win.dataset.originalTop = win.offsetTop;
-                win.style.width = '100vw';
-                win.style.height = '100vh';
-                win.style.left = '0px';
-                win.style.top = '0px';
-                win.classList.add('maximized');
-            }
-        });
-
-        makeDraggable(win);
-    }
-
-    document.getElementById('add-window').addEventListener('click', function() {
-        createWindow('This is a custom window');
-    });
-
-    document.getElementById('load-file-button').addEventListener('click', function() {
-        fetch('../../index.html')  // Fetch the content from the server
-            .then(response => response.text())
-            .then(content => {
-                createWindow(content);  // Add the content directly to a new window
-            })
-            .catch(error => {
-                alert('Failed to load the file: ' + error);
-            });
-    });
+    const embeddedHTML = \`${escapedContent}\`;
+    const win = window.open('', '_blank', 'width=800,height=600');
+    win.document.open();
+    win.document.write(embeddedHTML);
+    win.document.close();
 })();
-`;
-            const encodedBookmarkletCode = encodeURIComponent(bookmarkletCode.trim());
+                    `;
+
+                    generateLink(name, bookmarkletCode);
+                };
+
+                reader.readAsText(file);
+            } else {
+                // Generate bookmarklet for BluePixel DE (../../index.html)
+                const bookmarkletCode = `
+javascript:(function() {
+    const win = window.open('../../index.html', '_blank', 'width=800,height=600');
+    if (!win) {
+        alert('Pop-up blocked! Please allow pop-ups for this website.');
+    }
+})();
+                `;
+
+                generateLink(name, bookmarkletCode);
+            }
+        });
+
+        function generateLink(name, code) {
+            const encodedBookmarkletCode = encodeURIComponent(code.trim());
             const bookmarkletURL = `javascript:${encodedBookmarkletCode}`;
 
             const bookmarkletLink = document.createElement('a');
@@ -274,7 +112,7 @@ javascript:(function() {
             document.body.appendChild(bookmarkletLink);
             document.getElementById('instructions').style.display = 'block';
             document.getElementById('setup').style.display = 'none';
-        });
+        }
     </script>
 </body>
 </html>
